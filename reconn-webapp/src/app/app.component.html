@@ -1,0 +1,12 @@
+<p>Read-back:</p>
+<ng-container *ngIf="readbackResp | async as myreq">
+    <ul>
+        <li>{{ myreq.address }}</li>
+        <li>{{ myreq.headers | json }}</li>
+        <li>{{ myreq.method }}</li>
+        <li>{{ myreq.url }}</li>
+    </ul>
+</ng-container>
+
+<p>Router outlet:</p>
+<router-outlet></router-outlet>
