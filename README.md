@@ -39,3 +39,14 @@ ng serve
 Angular's auto-reloading web server will automatically proxy backend requests `/api/*` to `localhost:8080`.
 
 To run tests: `ng test --browsers ChromeHeadless`
+
+## Build container image
+
+The Makefile builds the backend (incl. web server) binary and frontend web app assets, then copies both into a container image:
+
+``` shell
+# CWD: reconn repository root
+make
+```
+
+Note that the web app assets uses `ng build --base-href /resource/` to match the expectation of the backend web server.
