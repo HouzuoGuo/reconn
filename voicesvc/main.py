@@ -14,6 +14,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--debug", help="start flask server in debug mode", action="store_true"
     )
+    parser.add_argument(
+        "--voice_sample_dir",
+        help="path to the directory of incoming user voice samples",
+        default="/tmp/voice_sample_dir",
+    )
     args = parser.parse_args()
-    app = create_app()
+    app = create_app(args.voice_sample_dir)
     app.run(host=args.address, port=args.port, debug=args.debug)
