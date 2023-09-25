@@ -1,11 +1,16 @@
 import pytest
+from pathlib import Path
+import os
 from . import create_app
 
 
 @pytest.fixture()
 def app():
-    app = create_app()
+    test_data_dir = "/tmp/reconn-voicesvc-test"
+    os.mkdir(test_data_dir)
+    app = create_app(test_data_dir)
     yield app
+    Path(test_data_dir).rmdir()
 
 
 @pytest.fixture()
