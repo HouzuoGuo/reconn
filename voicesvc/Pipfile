@@ -2,7 +2,6 @@
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
-
 # Outside of pipenv shell, install either CPU-only torch or CUDA-capable torch:
 # > sudo pip install -U --break-system-packages torch torchvision torchaudio # CPU-only
 # Verify with:
@@ -21,8 +20,8 @@ name = "pypi"
 # torchvision        0.15.2+cu117 C:\Program Files\Python311\Lib\site-packages                         pip
 # > python -c "import torch;print(torch.cuda.is_available())"
 # True
-
 # Next, enter pipenv shell, and execute "pipenv install --skip-lock" to automatically resolve and install the following packages:
+
 [packages]
 flask = "*"
 pytest = "*"

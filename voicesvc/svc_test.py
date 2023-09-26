@@ -1,5 +1,5 @@
 import pytest
-from pathlib import Path
+import shutil
 import os
 import svc
 
@@ -7,10 +7,10 @@ import svc
 @pytest.fixture()
 def app():
     test_data_dir = "/tmp/reconn-voicesvc-test"
-    os.mkdir(test_data_dir)
-    app = svc.create_app(test_data_dir)
+    os.makedirs(test_data_dir, exist_ok=True)
+    app = svc.create_app(test_data_dir, test_data_dir, test_data_dir, "cpu")
     yield app
-    Path(test_data_dir).rmdir()
+    shutil.rmtree(test_data_dir)
 
 
 @pytest.fixture()

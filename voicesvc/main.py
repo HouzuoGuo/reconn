@@ -21,6 +21,16 @@ if __name__ == "__main__":
         default="/tmp/voice_sample_dir",
     )
     parser.add_argument(
+        "--static_resource_dir",
+        help="path to the directory of static resources (e.g. base hubert model & tokeniser)",
+        default="/tmp/voice_static_resource_dir",
+    )
+    parser.add_argument(
+        "--voice_model_dir",
+        help="path to the directory of constructed user voice models",
+        default="/tmp/voice_model_dir",
+    )
+    parser.add_argument(
         "--ai_computing_device",
         help="computing device for AI workload - cpu or cuda",
         default="cuda",
@@ -32,9 +42,12 @@ if __name__ == "__main__":
         level=logging.NOTSET,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    logging.info(
-        f"about to start voice web service on {args.address}:{args.port} using {args.voice_sample_dir} for voice sample storage"
-    )
+    logging.info(f"about to start voice web service on {args.address}:{args.port}")
 
-    app = svc.create_app(args.voice_sample_dir, args.ai_computing_device)
+    app = svc.create_app(
+        args.voice_sample_dir,
+        args.voice_model_dir,
+        args.static_resource_dir,
+        args.ai_computing_device,
+    )
     app.run(host=args.address, port=args.port, debug=args.debug)
