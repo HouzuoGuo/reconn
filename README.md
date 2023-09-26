@@ -77,7 +77,7 @@ Press CTRL+C to quit
 To run tests, activate pip environment and run:
 
 ```shell
-(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ pytest
+(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ env PYTHONPATH=. pytest
 ================================================= test session starts ==================================================
 platform linux -- Python 3.11.4, pytest-7.4.2, pluggy-1.3.0
 rootdir: /mnt/c/Users/guoho/Downloads/reconn/voicesvc

@@ -3,12 +3,26 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
-[[source]]
-url = "https://download.pytorch.org/whl/cu117"
-verify_ssl = true
-name = "downloadpytorch"
+# Outside of pipenv shell, install either CPU-only torch or CUDA-capable torch:
+# > sudo pip install -U --break-system-packages torch torchvision torchaudio # CPU-only
+# Verify with:
+# > python -c "import torch;print(torch.cuda.is_available())"
+# False
+# > pip list -v | grep torch
+# torch                     2.0.1          /usr/local/lib/python3.11/dist-packages pip
+# torchaudio                2.0.2          /usr/local/lib/python3.11/dist-packages pip
+# torchvision               0.15.2         /usr/local/lib/python3.11/dist-packages pip
+#
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117 # CUDA-capable
+# Verify with:
+# pip list -v | sls torch
+# torch              2.0.1+cu117  C:\Program Files\Python311\Lib\site-packages                         pip
+# torchaudio         2.0.2+cu117  C:\Program Files\Python311\Lib\site-packages                         pip
+# torchvision        0.15.2+cu117 C:\Program Files\Python311\Lib\site-packages                         pip
+# > python -c "import torch;print(torch.cuda.is_available())"
+# True
 
-
+# Next, enter pipenv shell, and execute "pipenv install --skip-lock" to automatically resolve and install the following packages:
 [packages]
 flask = "*"
 pytest = "*"
