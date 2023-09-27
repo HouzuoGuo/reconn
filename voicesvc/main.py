@@ -43,6 +43,7 @@ if __name__ == "__main__":
         level=logging.NOTSET,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    logging.root.setLevel(logging.NOTSET)
     logging.info(f"about to start voice web service on {args.address}:{args.port}")
 
     voice_svc = VoiceSvc()
