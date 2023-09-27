@@ -54,3 +54,7 @@ class VoiceSvc:
             os.path.join(hubert_model_dir, "quantifier_hubert_base_ls960_14.pth"),
             map_location=map_location,
         ).to(ai_computing_device)
+
+    def init_tts(self, ai_computing_device: str, static_resource_dir: str):
+        # TODO
+        pass

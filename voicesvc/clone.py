@@ -21,14 +21,16 @@ def clone_rt_handler(app: Flask, svc: VoiceSvc):
         if request.content_type not in ["audio/x-wav", "audio/wav", "audio/wave"]:
             return "", 406
         req_data = request.get_data()
-        dest_file = os.path.join(app.config[CONFIG_VOICE_SAMPLE_KEY], user_id + ".wav")
-        logging.info(
-            f"clone requested for user {user_id}, request body length: {len(req_data)}, file destination: {dest_file}"
+        sample_dest_file = os.path.join(
+            app.config[CONFIG_VOICE_SAMPLE_KEY], user_id + ".wav"
         )
-        with open(dest_file, "wb") as file:
+        logging.info(
+            f"clone requested for user {user_id}, request body length: {len(req_data)}, file destination: {sample_dest_file}"
+        )
+        with open(sample_dest_file, "wb") as file:
             file.write(req_data)
 
-        wav, sr = torchaudio.load(dest_file)
+        wav, sr = torchaudio.load(sample_dest_file)
         wav = convert_audio(
             wav, sr, svc.bark_codec_model.sample_rate, svc.bark_codec_model.channels
         )
@@ -42,17 +44,27 @@ def clone_rt_handler(app: Flask, svc: VoiceSvc):
         codes = torch.cat([encoded[0] for encoded in encoded_frames], dim=-1).squeeze()
         codes = codes.cpu().numpy()
         semantic_tokens = semantic_tokens.cpu().numpy()
-        output_path = os.path.join(app.config[CONFIG_VOICE_MODEL_KEY], user_id + ".npz")
+        model_dest_file = os.path.join(
+            app.config[CONFIG_VOICE_MODEL_KEY], user_id + ".npz"
+        )
         numpy.savez(
-            output_path,
+            model_dest_file,
             fine_prompt=codes,
             coarse_prompt=codes[:2, :],
             semantic_prompt=semantic_tokens,
         )
-        return jsonify(
-            {
-                "request-method": request.method,
-                "request-host": request.host,
-                "request-url": request.url,
-            }
+        return jsonify({"sample": sample_dest_file, "model": model_dest_file})
+
+
+def tts_rt_handler(app: Flask, svc: VoiceSvc):
+    @app.route("/tts-rt/<user_id>", methods=["POST"])
+    def tts_rt_handler(user_id: str):
+        if request.content_type not in ["application/json"]:
+            return "", 406
+        req_data = request.get_data()
+        user_voice_model = os.path.join(
+            app.config[CONFIG_VOICE_MODEL_KEY], user_id + ".npz"
+        )
+        logging.info(
+            f"tts requested for user {user_id}, model path: {user_voice_model}"
         )

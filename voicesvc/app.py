@@ -29,6 +29,7 @@ def create_app(
     app.config[CONFIG_AI_COMPUTING_DEVICE] = ai_computing_device
     basic.readback_handler(app)
     clone.clone_rt_handler(app, svc)
+    clone.tts_rt_handler(app, svc)
 
     logging.info("initialising prerequisites")
     logging.info(f"using {ai_computing_device} for AI computing")
