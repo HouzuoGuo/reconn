@@ -20,7 +20,9 @@ name = "pypi"
 # torchvision        0.15.2+cu117 C:\Program Files\Python311\Lib\site-packages                         pip
 # > python -c "import torch;print(torch.cuda.is_available())"
 # True
-# Next, enter pipenv shell, and execute "pipenv install --skip-lock" to automatically resolve and install the following packages:
+#
+# Next, use system package manager (apt, winget, etc) to install ffmpeg.
+# Then enter pipenv shell, and execute "pipenv install --skip-lock" to automatically resolve and install the following packages:
 
 [packages]
 flask = "*"

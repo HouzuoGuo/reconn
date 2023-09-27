@@ -19,7 +19,7 @@ def clone_rt_handler(app: Flask, svc: VoiceSvc):
         logging.info(
             f"clone requested for user {user_id}, request body length: {len(req_data)}, file destination: {dest_file}"
         )
-        with open(dest_file, "w") as file:
+        with open(dest_file, "wb") as file:
             file.write(req_data)
 
         wav, sr = torchaudio.load(dest_file)
