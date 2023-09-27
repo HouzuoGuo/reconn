@@ -2,7 +2,7 @@
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
-# Outside of pipenv shell, install either CPU-only torch or CUDA-capable torch:
+# In a fresh pipenv shell (pipenv --rm if unsure), first install torch using pip (don't use pipenv install):
 # > sudo pip install -U --break-system-packages torch torchvision torchaudio # CPU-only
 # Verify with:
 # > python -c "import torch;print(torch.cuda.is_available())"
@@ -22,7 +22,7 @@ name = "pypi"
 # True
 #
 # Next, use system package manager (apt, winget, etc) to install ffmpeg.
-# Then enter pipenv shell, and execute "pipenv install --skip-lock" to automatically resolve and install the following packages:
+# Then stay in the pipenv shell, and execute "pipenv install --skip-lock" to automatically resolve and install the following packages:
 
 [packages]
 flask = "*"
