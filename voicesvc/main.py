@@ -2,7 +2,8 @@
 
 import argparse
 import logging
-import svc
+import app
+from svc import VoiceSvc
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -44,10 +45,14 @@ if __name__ == "__main__":
     )
     logging.info(f"about to start voice web service on {args.address}:{args.port}")
 
-    app = svc.create_app(
+    voice_svc = VoiceSvc()
+    voice_svc.init_clone(args.ai_computing_device, args.static_resource_dir)
+
+    flask_app = app.create_app(
         args.voice_sample_dir,
         args.voice_model_dir,
         args.static_resource_dir,
         args.ai_computing_device,
+        voice_svc,
     )
-    app.run(host=args.address, port=args.port, debug=args.debug)
+    flask_app.run(host=args.address, port=args.port, debug=args.debug)
