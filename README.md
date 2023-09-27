@@ -77,9 +77,11 @@ Press CTRL+C to quit
 To run tests, activate pip environment and run:
 
 ```shell
-(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ env PYTHONPATH=. pytest
-================================================= test session starts ==================================================
-platform linux -- Python 3.11.4, pytest-7.4.2, pluggy-1.3.0
-rootdir: /mnt/c/Users/guoho/Downloads/reconn/voicesvc
+(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ python -m pytest
+...
+--------------------------------------------------------------------- live log setup ---------------------------------------------------------------------
+INFO     root:svc.py:82 initialising flask url handlers
+INFO     root:svc.py:91 initialising prerequisites
+INFO     root:svc.py:92 using cpu for AI computing
 ...
 ```
