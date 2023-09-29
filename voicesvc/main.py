@@ -17,9 +17,9 @@ if __name__ == "__main__":
         "--debug", help="start flask server in debug mode", action="store_true"
     )
     parser.add_argument(
-        "--voice_sample_dir",
-        help="path to the directory of incoming user voice samples",
-        default="/tmp/voice_sample_dir",
+        "--ai_computing_device",
+        help="computing device for AI workload - cpu or cuda",
+        default="cuda",
     )
     parser.add_argument(
         "--static_resource_dir",
@@ -27,14 +27,24 @@ if __name__ == "__main__":
         default="/tmp/voice_static_resource_dir",
     )
     parser.add_argument(
+        "--voice_sample_dir",
+        help="path to the directory of incoming user voice samples",
+        default="/tmp/voice_sample_dir",
+    )
+    parser.add_argument(
         "--voice_model_dir",
         help="path to the directory of constructed user voice models",
         default="/tmp/voice_model_dir",
     )
     parser.add_argument(
-        "--ai_computing_device",
-        help="computing device for AI workload - cpu or cuda",
-        default="cuda",
+        "--voice_temp_model_dir",
+        help="path to the directory of temporary user voice models used during TTS",
+        default="/tmp/voice_temp_model_dir",
+    )
+    parser.add_argument(
+        "--voice_output_dir",
+        help="path to the directory of TTS output files",
+        default="/tmp/voice_output_dir",
     )
     args = parser.parse_args()
 
@@ -46,14 +56,16 @@ if __name__ == "__main__":
     logging.root.setLevel(logging.NOTSET)
     logging.info(f"about to start voice web service on {args.address}:{args.port}")
 
-    voice_svc = VoiceSvc()
-    voice_svc.init_clone(args.ai_computing_device, args.static_resource_dir)
-
-    flask_app = app.create_app(
+    voice_svc = VoiceSvc(
+        args.ai_computing_device,
+        args.static_resource_dir,
         args.voice_sample_dir,
         args.voice_model_dir,
-        args.static_resource_dir,
-        args.ai_computing_device,
-        voice_svc,
+        args.voice_temp_model_dir,
+        args.voice_output_dir,
     )
+    voice_svc.init_clone()
+    voice_svc.init_tts()
+
+    flask_app = app.create_app(voice_svc)
     flask_app.run(host=args.address, port=args.port, debug=args.debug)

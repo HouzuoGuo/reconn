@@ -78,6 +78,7 @@ transformers = "*"
 audiolm-pytorch = "*"
 fairseq = {ref = "main", git = "git+https://github.com/re-connect-ai/fairseq.git"}
 beartype = "==0.15.0"
+nltk = "*"
 
 [dev-packages]
 
