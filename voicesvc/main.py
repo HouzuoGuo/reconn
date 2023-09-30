@@ -55,7 +55,7 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     logging.root.setLevel(logging.NOTSET)
-    logging.info(f"about to start voice web service on {args.address}:{args.port}")
+    logging.info(f"initialising voice service")
 
     voice_svc = VoiceSvc(
         args.ai_computing_device,
@@ -70,8 +70,12 @@ if __name__ == "__main__":
 
     flask_app = app.create_app(voice_svc)
     if args.debug:
+        logging.info(
+            f"starting flask built-in development web server on {args.address}:{args.port}"
+        )
         flask_app.run(host=args.address, port=args.port, debug=args.debug)
     else:
+        logging.info(f"starting waitress wsgi web server on {args.address}:{args.port}")
         waitress.server.create_server(
             flask_app, host=args.address, port=args.port
         ).run()

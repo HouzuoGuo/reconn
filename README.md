@@ -103,8 +103,8 @@ PS C:\Users\guoho\Downloads\reconn\voicesvc> python main.py
 2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_temp_model_dir for temporary voice model storage
 2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_output_dir for TTS output storage`
 ...
-2023-09-30 18:19:00 | INFO | bark_voice_clone.bark.generation | model loaded: 302.1M params, 2.079 loss
-2023-09-30 18:19:01 | INFO | root | initialising flask url handlers
+2023-09-30 18:31:32 | INFO | root | initialising flask url handlers
+2023-09-30 18:31:32 | INFO | root | starting waitress wsgi web server on 127.0.0.1:8081
 ...
 ```
 
