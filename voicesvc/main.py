@@ -3,6 +3,7 @@
 import argparse
 import logging
 import app
+import waitress
 from svc import VoiceSvc
 
 if __name__ == "__main__":
@@ -68,4 +69,9 @@ if __name__ == "__main__":
     voice_svc.init_tts()
 
     flask_app = app.create_app(voice_svc)
-    flask_app.run(host=args.address, port=args.port, debug=args.debug)
+    if args.debug:
+        flask_app.run(host=args.address, port=args.port, debug=args.debug)
+    else:
+        waitress.server.create_server(
+            flask_app, host=args.address, port=args.port
+        ).run()

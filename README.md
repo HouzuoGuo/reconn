@@ -57,7 +57,9 @@ Note that the web app assets uses `ng build --base-href /resource/` to match the
 
 ### Start the voice server
 
-Install pipenv (`pip install pipenv`) and then activate pip environment and run:
+Install pipenv (`pip install pipenv`), then enter pipenv shell, and follow the instructions in `reconn/voicesvc/Pipfile` to install the dependencies.
+
+Start the development web server using `./main.py --debug --ai_computing_device=cpu` (too slow for AI inference):
 
 ```shell
 ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ pipenv shell
@@ -65,7 +67,15 @@ Launching subshell in virtual environment...
  source /home/howard/.local/share/virtualenvs/voicesvc-gxZigfdY/bin/activate.fish
 ⋊> /m/c/U/g/D/r/voicesvc on main ⨯  source /home/howard/.local/share/virtualenvs/voicesvc-gxZigfdY/bin/activate.fish
 
-(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ ./main.py
+(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ ./main.py --debug --ai_computing_device=cpu
+2023-09-30 18:06:18 | INFO | root | about to start voice web service on 127.0.0.1:8081
+2023-09-30 18:06:18 | INFO | root | using cpu for AI computing
+2023-09-30 18:06:18 | INFO | root | using /tmp/voice_static_resource_dir for static resources
+2023-09-30 18:06:18 | INFO | root | using /tmp/voice_sample_dir for voice sample storage
+2023-09-30 18:06:18 | INFO | root | using /tmp/voice_model_dir for voice model storage
+2023-09-30 18:06:18 | INFO | root | using /tmp/voice_temp_model_dir for temporary voice model storage
+2023-09-30 18:06:18 | INFO | root | using /tmp/voice_output_dir for TTS output storage
+...
  * Serving Flask app 'app'
  * Debug mode: off
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
@@ -74,7 +84,31 @@ Press CTRL+C to quit
 ...
 ```
 
-To run tests, activate pip environment and run:
+To start on CUDA-capable Windows host:
+
+``` shell
+PS C:\Users\guoho\Downloads\reconn\voicesvc> pipenv shell
+Launching subshell in virtual environment...
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Users\guoho\Downloads\reconn\voicesvc> python main.py
+2023-09-30 18:18:33 | INFO | root | about to start voice web service on 127.0.0.1:8081
+2023-09-30 18:18:33 | INFO | root | using cuda for AI computing
+2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_static_resource_dir for static resources
+2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_sample_dir for voice sample storage
+2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_model_dir for voice model storage
+2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_temp_model_dir for temporary voice model storage
+2023-09-30 18:18:33 | INFO | root | using C:\tmp\voice_output_dir for TTS output storage`
+...
+2023-09-30 18:19:00 | INFO | bark_voice_clone.bark.generation | model loaded: 302.1M params, 2.079 loss
+2023-09-30 18:19:01 | INFO | root | initialising flask url handlers
+...
+```
+
+To run tests, stay in pipenv shell and run:
 
 ```shell
 (voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ python -m pytest

@@ -32,7 +32,7 @@ def tts_rt_handler(app: Flask, svc: VoiceSvc):
         text = request.json["text"]
         transaction_id = str(time.time())
         logging.info(
-            f"tts requested for user {user_id}, transaction {transaction_id}, request text: {text}"
+            f"tts requested for user {user_id} and transaction {transaction_id}, request text: {text}"
         )
         tts_output_wav = svc.tts(
             user_id, transaction_id, text, 80, 0.9, 0.001, 0.6, 0.7, 0.5

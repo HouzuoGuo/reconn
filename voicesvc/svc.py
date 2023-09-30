@@ -183,7 +183,7 @@ class VoiceSvc:
         active_model = original_model
         for index, sentence in enumerate(nltk.sent_tokenize(text_prompt)):
             logging.info(
-                f'converting sentence "{sentence}" to speech for user {user_id}'
+                f'converting sentence "{sentence}" for {user_id} transaction {transaction_id}'
             )
             x_semantic = generate_text_semantic(
                 sentence,
@@ -193,6 +193,7 @@ class VoiceSvc:
                 top_k=top_k,
                 top_p=top_p,
                 min_eos_p=min_eos_p,
+                silent=True,
             )
             full_out, audio_array = semantic_to_waveform(
                 x_semantic,
@@ -200,6 +201,7 @@ class VoiceSvc:
                 temp=waveform_temp,
                 output_full=True,
                 fine_temp=fine_temp,
+                silent=True,
             )
             voice_segments += [audio_array]
 
@@ -212,6 +214,7 @@ class VoiceSvc:
                     fine_prompt=full_out["fine_prompt"],
                 )
                 active_model = temp_model
+        os.remove(temp_model)
         write_wav(tts_output_wav, SAMPLE_RATE, numpy.concatenate(voice_segments))
-        # TODO FIXME: delete the temporary model file
+        # TODO FIXME: periodically clean up left over temporary models
         return tts_output_wav
