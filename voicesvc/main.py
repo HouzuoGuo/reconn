@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from logging.config import dictConfig
 import argparse
 import logging
 import app

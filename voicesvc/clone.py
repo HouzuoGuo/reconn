@@ -1,4 +1,3 @@
-import logging
 import codecs
 import time
 from flask import jsonify, request, Flask, Response, make_response
@@ -12,15 +11,11 @@ def clone_rt_handler(app: Flask, svc: VoiceSvc):
         if request.content_type not in ["audio/x-wav", "audio/wav", "audio/wave"]:
             return "", 406
         req_data = request.get_data()
-        logging.info(
+        app.logger.info(
             f"clone requested for user {user_id}, request body length: {len(req_data)}"
         )
         model_dest_file = svc.clone(user_id, req_data)
-        return Response(
-            response=jsonify({"model": model_dest_file}),
-            status=200,
-            mimetype="application/json",
-        )
+        return jsonify({"model": model_dest_file}), 200
 
 
 # Convert text to speech using the user's voice model.
@@ -31,7 +26,7 @@ def tts_rt_handler(app: Flask, svc: VoiceSvc):
             return "", 406
         text = request.json["text"]
         transaction_id = str(time.time())
-        logging.info(
+        app.logger.info(
             f"tts requested for user {user_id} and transaction {transaction_id}, request text: {text}"
         )
         tts_output_wav = svc.tts(
@@ -40,4 +35,4 @@ def tts_rt_handler(app: Flask, svc: VoiceSvc):
         response = make_response()
         response.headers["content-type"] = "audio/wav"
         response.data = codecs.open(tts_output_wav, "rb").read()
-        return response
+        return response, 200

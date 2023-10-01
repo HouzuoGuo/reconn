@@ -35,6 +35,7 @@ And then:
 ```shell
 # CWD: reconn repository root
 cd reconn-webapp
+npm install # install angular dependencies
 ng serve
 ```
 
