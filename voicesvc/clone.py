@@ -30,7 +30,9 @@ def tts_rt_handler(app: Flask, svc: VoiceSvc):
             f"tts requested for user {user_id} and transaction {transaction_id}, request text: {text}"
         )
         tts_output_wav = svc.tts(
-            user_id, transaction_id, text, 80, 0.9, 0.001, 0.6, 0.7, 0.5
+            # user_id, transaction_id, text, 80, 0.9, 0.001, 0.6, 0.7, 0.5
+            # Kudus to Yonatan for identifying this parameter set:
+            user_id, transaction_id, text, 99, 0.8, 0.01, 0.7, 0.6, 0.5
         )
         response = make_response()
         response.headers["content-type"] = "audio/wav"
