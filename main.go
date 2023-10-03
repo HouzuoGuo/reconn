@@ -14,7 +14,7 @@ import (
 func main() {
 	var port int
 	var debugMode bool
-	var addr, voiceServiceAddr, openaiKey, basicAuthUser, basicAuthPassword string
+	var addr, voiceServiceAddr, openaiKey, basicAuthUser, basicAuthPassword, voiceModelDir string
 	flag.BoolVar(&debugMode, "debug", false, "start http server in debug mode")
 	flag.IntVar(&port, "port", 8080, "http server listener port")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "http server listener address")
@@ -22,6 +22,7 @@ func main() {
 	flag.StringVar(&basicAuthPassword, "authpass", "reconnreconn", "http basic auth user name")
 	flag.StringVar(&voiceServiceAddr, "voicesvcaddr", "localhost:8081", "voice service address (host:port)")
 	flag.StringVar(&openaiKey, "openaikey", "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", "openai API secret key")
+	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "the directory of constructed user voice models used by the voice service")
 	flag.Parse()
 
 	log.Printf("about to start web service on port %d, connect to backend voice service at %q, debug mode? %v, using http basic auth? %v", port, voiceServiceAddr, debugMode, basicAuthUser != "")
@@ -31,6 +32,7 @@ func main() {
 		OpenAIKey:         openaiKey,
 		BasicAuthUser:     basicAuthUser,
 		BasicAuthPassword: basicAuthPassword,
+		VoiceModelDir:     voiceModelDir,
 	})
 	if err != nil {
 		log.Fatalf("failed to initialise http service: %v", err)

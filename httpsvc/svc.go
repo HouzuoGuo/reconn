@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +27,8 @@ type Config struct {
 	VoiceServiceAddr string
 	// OpenAIKey is the API key of OpenAI / ChatGPT.
 	OpenAIKey string
+	// VoiceModelDir is the directory of constructed user voice models used by the voice service.
+	VoiceModelDir string
 }
 
 // HttpService implements HTTP handlers for serving static content, relaying to voice service, and more.
@@ -157,6 +161,40 @@ func (svc *HttpService) handleRelayTextToSpeechRealTime(c *gin.Context) {
 	c.DataFromReader(http.StatusOK, int64(len(wavContent)), "audio/wav", bytes.NewReader(wavContent), nil)
 }
 
+// ListVoiceModelResponse is the structure of GET /voice-model response.
+type ListVoiceModelResponse struct {
+	Models map[string]VoiceModel `json:"models"`
+}
+
+// ListVoiceModelResponse describes a single cloned voice model.
+type VoiceModel struct {
+	FileName string `json:"fileName"`
+	UserID   string `json:"userId"`
+}
+
+// handleListVoiceModel is a gin handler that responds with the current list of cloned voice models.
+// It should only be used by the experimental web app.
+func (svc *HttpService) handleListVoiceModel(c *gin.Context) {
+	entries, err := ioutil.ReadDir(svc.Config.VoiceModelDir)
+	if err != nil {
+		log.Printf("failed to read voice model directory: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to read voice model directory"})
+	}
+	resp := ListVoiceModelResponse{Models: map[string]VoiceModel{}}
+	for _, entry := range entries {
+		fileName := entry.Name()
+		if filepath.Ext(fileName) != ".npz" {
+			continue
+		}
+		userID := strings.TrimSuffix(fileName, filepath.Ext(fileName))
+		resp.Models[userID] = VoiceModel{
+			FileName: fileName,
+			UserID:   userID,
+		}
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
 func (svc *HttpService) SetupRouter() *gin.Engine {
 	if svc.Config.DebugMode {
 		gin.SetMode(gin.DebugMode)
@@ -166,7 +204,7 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 
 	router := gin.Default()
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		return fmt.Sprintf("%s - from: %s \"%s\", request: %s %s %s, response: %d in %dus and %v bytes, err: %s\"\n",
+		return fmt.Sprintf("%s from: %s \"%s\", request: %s %s %s, response: %d in %dus and %v bytes, err: %s\\n",
 			param.TimeStamp.Format(time.RFC3339),
 			param.ClientIP,
 			param.Request.UserAgent(),
@@ -188,6 +226,7 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 	router.GET("/api/readback", svc.handleReadback)
 	router.POST("/api/clone-rt/:user_id", svc.handleRelayCloneRealTime)
 	router.POST("/api/tts-rt/:user_id", svc.handleRelayTextToSpeechRealTime)
+	router.GET("/api/voice-model", svc.handleListVoiceModel)
 	router.Static("/resource", "./resource")
 	router.StaticFile("/", "./resource/index.html")
 	return router

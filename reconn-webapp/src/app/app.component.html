@@ -1,12 +1,34 @@
-<p>Read-back:</p>
+<ng-container *ngIf="voiceModelListResp | async as resp">
+    <h3>All cloned voice models (count: {{ Object.keys(resp.models).length }})</h3>
+    <ul>
+        <li *ngFor="let model of resp.models | keyvalue">User ID: {{ model.value.userId }}</li>
+    </ul>
+</ng-container>
+<button #refreshVoiceModelsButton>Refresh list</button>
+
+<h3>Create / update cloned voice model</h3>
+<clone-voice></clone-voice>
+
+<h3>Convert text to speech using a cloned model</h3>
+<tts></tts>
+
+<h3>Debug: read-back client request</h3>
 <ng-container *ngIf="readbackResp | async as myreq">
     <ul>
-        <li>{{ myreq.address }}</li>
-        <li>{{ myreq.headers | json }}</li>
-        <li>{{ myreq.method }}</li>
-        <li>{{ myreq.url }}</li>
+        <li>Client address:
+            <pre>{{ myreq.address }}</pre>
+        </li>
+        <li>Request headers:
+            <pre>{{ myreq.headers | json }}</pre>
+        </li>
+        <li>Request method:
+            <pre>{{ myreq.method }}</pre>
+        </li>
+        <li>Request URL:
+            <pre>{{ myreq.url }}</pre>
+        </li>
     </ul>
 </ng-container>
 
-<p>Router outlet:</p>
+<h3>Debug: router outlet</h3>
 <router-outlet></router-outlet>
