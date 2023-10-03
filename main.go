@@ -14,9 +14,10 @@ import (
 func main() {
 	var port int
 	var debugMode bool
-	var voiceServiceAddr, openaiKey, basicAuthUser, basicAuthPassword string
+	var addr, voiceServiceAddr, openaiKey, basicAuthUser, basicAuthPassword string
 	flag.BoolVar(&debugMode, "debug", false, "start http server in debug mode")
-	flag.IntVar(&port, "port", 8080, "http server port")
+	flag.IntVar(&port, "port", 8080, "http server listener port")
+	flag.StringVar(&addr, "addr", "0.0.0.0", "http server listener address")
 	flag.StringVar(&basicAuthUser, "authuser", "reconn", "http basic auth user name")
 	flag.StringVar(&basicAuthPassword, "authpass", "reconnreconn", "http basic auth user name")
 	flag.StringVar(&voiceServiceAddr, "voicesvcaddr", "localhost:8081", "voice service address (host:port)")
@@ -41,7 +42,7 @@ func main() {
 		WriteTimeout:      3 * time.Minute,
 		MaxHeaderBytes:    1024 * 1024,
 		Handler:           httpService.SetupRouter(),
-		Addr:              net.JoinHostPort("0.0.0.0", strconv.Itoa(port)),
+		Addr:              net.JoinHostPort(addr, strconv.Itoa(port)),
 	}
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)

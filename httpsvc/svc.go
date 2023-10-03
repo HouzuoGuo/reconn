@@ -163,7 +163,24 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	router := gin.Default()
+	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+		return fmt.Sprintf("%s - from: %s \"%s\", request: %s %s %s, response: %d in %dus and %v bytes, err: %s\"\n",
+			param.TimeStamp.Format(time.RFC3339),
+			param.ClientIP,
+			param.Request.UserAgent(),
+			param.Method,
+			param.Path,
+			param.Request.Proto,
+			param.StatusCode,
+			param.Latency.Microseconds(),
+			param.BodySize,
+			param.ErrorMessage,
+		)
+	}))
+	router.Use(gin.Recovery())
+
 	if svc.Config.BasicAuthUser != "" {
 		router.Use(gin.BasicAuth(gin.Accounts{svc.Config.BasicAuthUser: svc.Config.BasicAuthPassword}))
 	}
