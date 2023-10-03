@@ -15,6 +15,8 @@ import (
 
 // Config has the configuration of the web server itself and its external dependencies.
 type Config struct {
+	// DebugMode flag indicates that the http service shall run in debug mode for development and testing only.
+	DebugMode bool
 	// BasicAuthUser is the optional user name of basic authentication used by all handlers.
 	BasicAuthUser string
 	// BasicAuthUser is the password of basic authentication used by all handlers.
@@ -156,6 +158,11 @@ func (svc *HttpService) handleRelayTextToSpeechRealTime(c *gin.Context) {
 }
 
 func (svc *HttpService) SetupRouter() *gin.Engine {
+	if svc.Config.DebugMode {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
 	if svc.Config.BasicAuthUser != "" {
 		router.Use(gin.BasicAuth(gin.Accounts{svc.Config.BasicAuthUser: svc.Config.BasicAuthPassword}))
