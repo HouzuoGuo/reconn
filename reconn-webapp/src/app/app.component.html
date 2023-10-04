@@ -1,7 +1,7 @@
 <ng-container *ngIf="voiceModelListResp | async as resp">
     <h3>All cloned voice models (count: {{ Object.keys(resp.models).length }})</h3>
     <ul>
-        <li *ngFor="let model of resp.models | keyvalue">User ID: {{ model.value.userId }}</li>
+        <li *ngFor="let model of resp.models | keyvalue">{{ model.value | json }}</li>
     </ul>
 </ng-container>
 <button #refreshVoiceModelsButton>Refresh list</button>

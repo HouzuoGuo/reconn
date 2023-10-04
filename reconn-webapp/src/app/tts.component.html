@@ -1,1 +1,15 @@
-TODO:TTS component
+<p>Voice model user ID: <input type="text" [(ngModel)]="userID" /></p>
+<p>Text to conver to speech:
+    <textarea [(ngModel)]="text" rows=5 cols=80></textarea>
+</p>
+<p>Parameter - top K: <input type="text" [(ngModel)]="topK" /></p>
+<p>Parameter - top P: <input type="text" [(ngModel)]="topP" /></p>
+<p>Parameter - min eos P: <input type="text" [(ngModel)]="mineosP" /></p>
+<p>Parameter - semantic temperature: <input type="text" [(ngModel)]="semanticTemp" /></p>
+<p>Parameter - waveform temperature: <input type="text" [(ngModel)]="waveformTemp" /></p>
+<p>Parameter - fine temperature: <input type="text" [(ngModel)]="fineTemp" /></p>
+<p><button (click)="ttsButtonClick()">Convert to speech</button></p>
+<p>{{statusMessage}}</p>
+<p *ngIf="speechBlobSrc | async as src">
+    <audio controls [src]="src"></audio>
+</p>

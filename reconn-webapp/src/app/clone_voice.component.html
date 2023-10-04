@@ -1,2 +1,5 @@
-<p>User ID: <input type="text" [(ngModel)]="userID"></p>
-<button #cloneButton>Clone</button>
+<p>Enter a short and sweet user ID: <input type="text" [(ngModel)]="userID" /></p>
+<p>Record your voice: <button (click)="recordButtonClick()">{{ recordButtonCaption }}</button></p>
+<p *ngIf="recorderError | async as err">{{ err | json }}</p>
+<p><button (click)="cloneButtonClick()">Clone</button></p>
+<p>{{ cloneMessage | async }}</p>

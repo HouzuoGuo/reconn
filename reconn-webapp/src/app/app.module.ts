@@ -5,11 +5,11 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { AudioRecorderModule } from './audio_recorder_module';
 import { CloneVoiceComponent } from './clone_voice.component';
 import { ReadbackService } from './readback.service';
 import { TTSComponent } from './tts.component';
 import { VoiceService } from './voice.service';
-import { AudioRecorderModule } from './audio_recorder_module';
 
 @NgModule({
   declarations: [
@@ -22,7 +22,7 @@ import { AudioRecorderModule } from './audio_recorder_module';
     HttpClientModule,
     AppRoutingModule,
     FormsModule,
-
+    AudioRecorderModule,
   ],
   providers: [
     ReadbackService,

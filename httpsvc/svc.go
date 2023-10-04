@@ -60,8 +60,13 @@ type CloneRealTimeResponse struct {
 
 // TextToSpeechRealTimeRequest is the structure of /tts-rt/ request.
 type TextToSpeechRealTimeRequest struct {
-	// Text is the text to be converted into speech.
-	Text string `json:"text"`
+	Text         string  `json:"text"`
+	TopK         float64 `json:"topK"`
+	TopP         float64 `json:"topP"`
+	MineosP      float64 `json:"mineosP"`
+	SemanticTemp float64 `json:"semanticTemp"`
+	WaveformTemp float64 `json:"waveformTemp"`
+	FineTemp     float64 `json:"fineTemp"`
 }
 
 // handleReadback is a gin handler that reads back several parameters from the request.
@@ -168,8 +173,9 @@ type ListVoiceModelResponse struct {
 
 // ListVoiceModelResponse describes a single cloned voice model.
 type VoiceModel struct {
-	FileName string `json:"fileName"`
-	UserID   string `json:"userId"`
+	FileName     string    `json:"fileName"`
+	UserID       string    `json:"userId"`
+	LastModified time.Time `json:"lastModified"`
 }
 
 // handleListVoiceModel is a gin handler that responds with the current list of cloned voice models.
@@ -188,8 +194,9 @@ func (svc *HttpService) handleListVoiceModel(c *gin.Context) {
 		}
 		userID := strings.TrimSuffix(fileName, filepath.Ext(fileName))
 		resp.Models[userID] = VoiceModel{
-			FileName: fileName,
-			UserID:   userID,
+			FileName:     fileName,
+			UserID:       userID,
+			LastModified: entry.ModTime(),
 		}
 	}
 	c.JSON(http.StatusOK, resp)

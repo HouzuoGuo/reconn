@@ -1,14 +1,13 @@
 // Temporarily copied from https://github.com/killroywashere/ng-audio-recorder/tree/master, unknown license (copyright reserved to killroywashere?)
-// TODO FIXME: switch to an open source alternative.
-// TODO FIXME: use https://github.com/chrisguttandin/extendable-media-recorder to record in WAV.
+// TODO FIXME: switch to an open source alternative, or recreate the copyrighted code on my own.
 
 import { EventEmitter, Injectable, NgModule } from '@angular/core';
-
-declare var MediaRecorder: any;
+import { connect } from 'extendable-media-recorder-wav-encoder';
+import { MediaRecorder, register } from 'extendable-media-recorder';
 
 export enum OutputFormat {
-  WEBM_BLOB_URL,
-  WEBM_BLOB,
+  URL,
+  BLOB,
 }
 
 export enum ErrorCase {
@@ -28,12 +27,11 @@ export enum RecorderState {
 
 @Injectable()
 export class AudioRecorderService {
-
   private chunks: Array<any> = [];
   protected recorderEnded = new EventEmitter();
   public recorderError = new EventEmitter<ErrorCase>();
-  // tslint:disable-next-line
   private _recorderState = RecorderState.INITIALIZING;
+  private firstTime = true;
 
   constructor() {
   }
@@ -50,7 +48,11 @@ export class AudioRecorderService {
     return AudioRecorderService.guc();
   }
 
-  startRecording() {
+  async startRecording() {
+    if (this.firstTime) {
+      await register(await connect());
+      this.firstTime = false;
+    }
     if (this._recorderState === RecorderState.RECORDING) {
       this.recorderError.emit(ErrorCase.ALREADY_RECORDING);
     }
@@ -60,7 +62,7 @@ export class AudioRecorderService {
     }
     this._recorderState = RecorderState.INITIALIZING;
     AudioRecorderService.guc().then((mediaStream) => {
-      this.recorder = new MediaRecorder(mediaStream);
+      this.recorder = new MediaRecorder(mediaStream, { mimeType: 'audio/wav' });
       this._recorderState = RecorderState.INITIALIZED;
       this.addListeners();
       this.recorder.start();
@@ -87,10 +89,10 @@ export class AudioRecorderService {
     return new Promise((resolve, reject) => {
       this.recorderEnded.subscribe((blob) => {
         this._recorderState = RecorderState.STOPPED;
-        if (outputFormat === OutputFormat.WEBM_BLOB) {
+        if (outputFormat === OutputFormat.BLOB) {
           resolve(blob);
         }
-        if (outputFormat === OutputFormat.WEBM_BLOB_URL) {
+        if (outputFormat === OutputFormat.URL) {
           const audioURL = URL.createObjectURL(blob);
           resolve(audioURL);
         }
@@ -117,7 +119,7 @@ export class AudioRecorderService {
     this.chunks.push(event.data);
   };
   private recordingStopped = (event: any) => {
-    const blob = new Blob(this.chunks, { type: 'audio/webm' });
+    const blob = new Blob(this.chunks, { type: 'audio/wav' });
     this.chunks = [];
     this.recorderEnded.emit(blob);
     this.clear();
