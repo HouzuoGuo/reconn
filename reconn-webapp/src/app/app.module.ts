@@ -9,6 +9,7 @@ import { CloneVoiceComponent } from './clone_voice.component';
 import { ReadbackService } from './readback.service';
 import { TTSComponent } from './tts.component';
 import { VoiceService } from './voice.service';
+import { AudioRecorderModule } from './audio_recorder_module';
 
 @NgModule({
   declarations: [
@@ -21,10 +22,12 @@ import { VoiceService } from './voice.service';
     HttpClientModule,
     AppRoutingModule,
     FormsModule,
+
   ],
   providers: [
     ReadbackService,
     VoiceService,
+    AudioRecorderModule,
   ],
   bootstrap: [AppComponent]
 })
