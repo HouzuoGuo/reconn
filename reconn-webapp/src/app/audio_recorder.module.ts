@@ -133,8 +133,7 @@ export class AudioRecorderService {
 
 @NgModule({
   declarations: [],
-  imports: [
-  ],
+  imports: [],
   exports: [],
   providers: [
     AudioRecorderService

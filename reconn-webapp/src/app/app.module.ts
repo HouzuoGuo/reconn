@@ -6,12 +6,11 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AudioRecorderModule } from './audio_recorder.module';
-import { CloneVoiceComponent } from './clone_voice.component';
-import { ReadbackService } from './readback.service';
-import { TTSComponent } from './tts.component';
-import { VoiceService } from './voice.service';
 import { ChatComponent } from './chat.component';
-import { ChatService } from './chat.module';
+import { ChatModule, ReadbackService, VoiceService } from './chat.module';
+import { CloneVoiceComponent } from './clone_voice.component';
+import { TranscribeComponent } from './transcribe.component';
+import { TTSComponent } from './tts.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +18,7 @@ import { ChatService } from './chat.module';
     CloneVoiceComponent,
     TTSComponent,
     ChatComponent,
+    TranscribeComponent,
   ],
   imports: [
     BrowserModule,
@@ -26,12 +26,11 @@ import { ChatService } from './chat.module';
     AppRoutingModule,
     FormsModule,
     AudioRecorderModule,
+    ChatModule,
   ],
   providers: [
-    ReadbackService,
-    VoiceService,
-    ChatService,
     AudioRecorderModule,
+    ChatModule,
   ],
   bootstrap: [AppComponent]
 })

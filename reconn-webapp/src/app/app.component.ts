@@ -1,8 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Observable, fromEvent, of, shareReplay } from 'rxjs';
 import { exhaustMap, startWith } from 'rxjs/operators';
-import { ReadbackResponse, ReadbackService } from './readback.service';
-import { VoiceModelResponse, VoiceService } from './voice.service';
+import { ReadbackResponse, ReadbackService, VoiceModelResponse, VoiceService } from './chat.module';
 
 @Component({
   selector: 'app-root',

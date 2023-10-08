@@ -3,21 +3,21 @@ import { Component } from '@angular/core';
 import { Observable, ReplaySubject, combineLatest, fromEvent, of, shareReplay } from 'rxjs';
 import { catchError, exhaustMap, map, startWith, switchMap, take, tap } from 'rxjs/operators';
 import { AudioRecorderService, ErrorCase, OutputFormat } from './audio_recorder.module';
-import { CloneRealtimeResponse, ReadbackResponse, ReadbackService, VoiceModelResponse, VoiceService } from './chat.module';
+import { ChatService, ReadbackResponse, ReadbackService, TranscribeRealTimeResponse } from './chat.module';
 
 @Component({
-  selector: 'clone-voice',
-  templateUrl: './clone_voice.component.html',
+  selector: 'transcribe',
+  templateUrl: './transcribe.component.html',
 })
-export class CloneVoiceComponent {
-  userID = '';
+export class TranscribeComponent {
+  userID = 'unused';
   recordingInProgress = false;
   recordButtonCaption = 'Start recording';
   recording?: Blob;
   recorderError: Observable<ErrorCase>;
-  cloneMessage = new ReplaySubject<string>(1);
+  transcribeStatus = new ReplaySubject<string>(1);
 
-  constructor(readonly recorderService: AudioRecorderService, private voiceService: VoiceService) {
+  constructor(readonly recorderService: AudioRecorderService, readonly chatService: ChatService) {
     this.recorderError = recorderService.recorderError.pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 
@@ -26,7 +26,7 @@ export class CloneVoiceComponent {
       this.recorderService.stopRecording(OutputFormat.BLOB).then((blob) => {
         console.log('recording blob', blob);
         this.recording = blob as Blob;
-        this.cloneMessage.next("Recording size: " + this.recording.size / 1024 + "KB");
+        this.transcribeStatus.next("Recording size: " + this.recording.size / 1024 + "KB");
       });
       this.recordingInProgress = false;
       this.recordButtonCaption = 'Start over';
@@ -37,23 +37,23 @@ export class CloneVoiceComponent {
     }
   }
 
-  cloneButtonClick() {
+  transcribeButtonClick() {
     if (!this.recording) {
       return;
     }
     console.log('input recording', this.recording);
-    this.cloneMessage.next("Stand by, cloning is in progress.");
-    this.voiceService.cloneRealTime(this.userID, this.recording).pipe(
-      map((cloneResp: CloneRealtimeResponse) => {
-        console.log('clone response', cloneResp);
-        return 'Cloned to model file: ' + cloneResp.model;
+    this.transcribeStatus.next("Stand by, transcription is in progress.");
+    this.chatService.transcribeRealTime(this.userID, this.recording).pipe(
+      map((resp: TranscribeRealTimeResponse) => {
+        console.log('transcription response', resp);
+        return 'Transcription: ' + resp.content;
       }),
       catchError((err: HttpErrorResponse) => {
         console.log('http error', err);
         return of('Error: ' + err.message);
       })
     ).subscribe((result: string) => {
-      this.cloneMessage.next(result);
+      this.transcribeStatus.next(result);
     });
   }
 }

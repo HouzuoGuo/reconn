@@ -187,6 +187,7 @@ func (svc *HttpService) handleListVoiceModel(c *gin.Context) {
 	if err != nil {
 		log.Printf("failed to read voice model directory: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to read voice model directory"})
+		return
 	}
 	resp := ListVoiceModelResponse{Models: map[string]VoiceModel{}}
 	for _, entry := range entries {
@@ -249,17 +250,62 @@ func (svc *HttpService) handleConverseSinglePrompt(c *gin.Context) {
 	if err != nil {
 		log.Printf("failed to invoke chat completion: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to invoke chat completion"})
+		return
 	}
 	if len(resp.Choices) == 0 {
 		log.Printf("failed to invoke chat completion due to empty reply: %+v", resp)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to invoke chat completion"})
+		return
 	}
-	log.Printf("chat completion for user ID %v spent %v total API tokens, final reply: %v", userID, resp.Usage.TotalTokens, resp.Choices[len(resp.Choices)-1])
+	log.Printf("chat completion for user ID %v: %+v", userID, resp)
 	var converseResponse ConverseSinglePromptResponse
 	for _, choice := range resp.Choices {
 		converseResponse.Reply += choice.Message.Content + " "
 	}
 	c.JSON(http.StatusOK, converseResponse)
+}
+
+// TranscribeRealTimeResponse is the structure of /transcribe-rt/ response.
+type TranscribeRealTimeRespons struct {
+	Language string `json:"language"`
+	Text     string `json:"content"`
+}
+
+// handleTranscribeRealTime is a gin handler that uses ChatGPT Whisper API to transcribe the speech in the request body.
+func (svc *HttpService) handleTranscribeRealTime(c *gin.Context) {
+	if c.ContentType() != "audio/wav" && c.ContentType() != "audio/x-wav" && c.ContentType() != "audio/wave" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "request content type must be wave"})
+		return
+	}
+	userID := c.Params.ByName("user_id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "user_id must be present"})
+		return
+	}
+	wavContent, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil || len(wavContent) < 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to read request body"})
+		return
+	}
+	// Reference: https://platform.openai.com/docs/api-reference/audio/createTranscription
+	resp, err := svc.OpenAIClient.CreateTranscription(c.Request.Context(), openai.AudioRequest{
+		Model: "whisper-1",
+		// The file path is part of the form submission, the extension name must accurately indicate the audio format.
+		FilePath: "input.wav",
+		Reader:   bytes.NewReader(wavContent),
+		Format:   openai.AudioResponseFormatText,
+	})
+	if err != nil {
+		log.Printf("failed to invoke whisper: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to transcribe"})
+		return
+	}
+	transcribeRealTimeRespons := TranscribeRealTimeRespons{
+		Language: resp.Language,
+		Text:     resp.Text,
+	}
+	log.Printf("transcription for user ID %v: %+v", userID, resp)
+	c.JSON(http.StatusOK, transcribeRealTimeRespons)
 }
 
 func (svc *HttpService) SetupRouter() *gin.Engine {
@@ -295,6 +341,7 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 	router.POST("/api/tts-rt/:user_id", svc.handleRelayTextToSpeechRealTime)
 	router.GET("/api/voice-model", svc.handleListVoiceModel)
 	router.POST("/api/converse-single-prompt/:user_id", svc.handleConverseSinglePrompt)
+	router.POST("/api/transcribe-rt/:user_id", svc.handleTranscribeRealTime)
 	router.Static("/resource", "./resource")
 	router.StaticFile("/", "./resource/index.html")
 	return router

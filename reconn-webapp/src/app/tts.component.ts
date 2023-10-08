@@ -1,8 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Observable, ReplaySubject, fromEvent, of, shareReplay } from 'rxjs';
 import { exhaustMap, map, startWith, tap } from 'rxjs/operators';
-import { ReadbackResponse, ReadbackService } from './readback.service';
-import { VoiceModelResponse, VoiceService } from './voice.service';
+import { ReadbackResponse, ReadbackService } from './chat.module';
+import { VoiceModelResponse, VoiceService } from './chat.module';
 
 @Component({
   selector: 'tts',
@@ -40,7 +40,7 @@ export class TTSComponent implements OnInit {
 
   ttsButtonClick() {
     this.statusMessage = 'Converting to speech, this may take a minute.';
-    this.voiceService.realTimeTTS(this.userID, this.text, Number(this.topK), Number(this.topP), Number(this.mineosP), Number(this.semanticTemp), Number(this.waveformTemp), Number(this.fineTemp))
+    this.voiceService.textToSpeechRealTIme(this.userID, this.text, Number(this.topK), Number(this.topP), Number(this.mineosP), Number(this.semanticTemp), Number(this.waveformTemp), Number(this.fineTemp))
       .pipe(tap(_ => { this.statusMessage = 'Ready, give it a listen.'; }))
       .subscribe(this.speechBlob);
   }
