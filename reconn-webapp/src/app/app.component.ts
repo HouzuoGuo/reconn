@@ -16,7 +16,7 @@ export class AppComponent implements OnInit {
   readbackResp: Observable<ReadbackResponse>;
   voiceModelListResp: Observable<VoiceModelResponse | undefined> = of(undefined);
 
-  constructor(private readbackService: ReadbackService, private voiceService: VoiceService) {
+  constructor(readonly readbackService: ReadbackService, readonly voiceService: VoiceService) {
     this.readbackResp = readbackService.readback().pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 

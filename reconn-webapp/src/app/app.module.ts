@@ -5,17 +5,20 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { AudioRecorderModule } from './audio_recorder_module';
+import { AudioRecorderModule } from './audio_recorder.module';
 import { CloneVoiceComponent } from './clone_voice.component';
 import { ReadbackService } from './readback.service';
 import { TTSComponent } from './tts.component';
 import { VoiceService } from './voice.service';
+import { ChatComponent } from './chat.component';
+import { ChatService } from './chat.module';
 
 @NgModule({
   declarations: [
     AppComponent,
     CloneVoiceComponent,
     TTSComponent,
+    ChatComponent,
   ],
   imports: [
     BrowserModule,
@@ -27,6 +30,7 @@ import { VoiceService } from './voice.service';
   providers: [
     ReadbackService,
     VoiceService,
+    ChatService,
     AudioRecorderModule,
   ],
   bootstrap: [AppComponent]

@@ -70,7 +70,7 @@ type TextToSpeechRealTimeRequest struct {
 }
 
 // handleReadback is a gin handler that reads back several parameters from the request.
-// This is often used for testing.
+// This is only used for experimenting, do not expose to the Internet.
 func (svc *HttpService) handleReadback(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"address": c.Request.RemoteAddr,
@@ -81,6 +81,7 @@ func (svc *HttpService) handleReadback(c *gin.Context) {
 }
 
 // handleRelayCloneRealTime is a gin handler that relays a real time voice cloning request to the voice service.
+// This is only used for experimenting, do not expose to the Internet.
 func (svc *HttpService) handleRelayCloneRealTime(c *gin.Context) {
 	if c.ContentType() != "audio/wav" && c.ContentType() != "audio/x-wav" && c.ContentType() != "audio/wave" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "request content type must be wave"})
@@ -121,6 +122,7 @@ func (svc *HttpService) handleRelayCloneRealTime(c *gin.Context) {
 }
 
 // handleRelayTextToSpeechRealTime is a gin handler that relays a real time text-to-speech request to the voice service.
+// This is only used for experimenting, do not expose to the Internet.
 func (svc *HttpService) handleRelayTextToSpeechRealTime(c *gin.Context) {
 	userID := c.Params.ByName("user_id")
 	if userID == "" {
@@ -202,6 +204,64 @@ func (svc *HttpService) handleListVoiceModel(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// TextToSpeechRealTimeRequest is the structure of /converse-single-prompt/ request.
+type ConverseSinglePromptRequest struct {
+	SystemPrompt string `json:"systemPrompt"`
+	UserPrompt   string `json:"userPrompt"`
+}
+
+// TextToSpeechRealTimeResponse is the structure of /converse-single-prompt/ response.
+type ConverseSinglePromptResponse struct {
+	Reply string `json:"reply"`
+}
+
+// handleConverseWithSystemRole is a gin handler that converses with chatgpt in a singular prompt - 1xQ for 1xA.
+// This is only used for experimenting, do not expose to the Internet.
+func (svc *HttpService) handleConverseSinglePrompt(c *gin.Context) {
+	userID := c.Params.ByName("user_id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "user_id must be present"})
+		return
+	}
+	var converseRequest ConverseSinglePromptRequest
+	if err := c.BindJSON(&converseRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to deserialise request"})
+		return
+	}
+	if len(converseRequest.UserPrompt) < 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "user prompt must be longer than 2 characters"})
+		return
+	}
+
+	resp, err := svc.OpenAIClient.CreateChatCompletion(c.Request.Context(), openai.ChatCompletionRequest{
+		Model: "gpt-4",
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: converseRequest.SystemPrompt,
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: converseRequest.UserPrompt,
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("failed to invoke chat completion: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to invoke chat completion"})
+	}
+	if len(resp.Choices) == 0 {
+		log.Printf("failed to invoke chat completion due to empty reply: %+v", resp)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to invoke chat completion"})
+	}
+	log.Printf("chat completion for user ID %v spent %v total API tokens, final reply: %v", userID, resp.Usage.TotalTokens, resp.Choices[len(resp.Choices)-1])
+	var converseResponse ConverseSinglePromptResponse
+	for _, choice := range resp.Choices {
+		converseResponse.Reply += choice.Message.Content + " "
+	}
+	c.JSON(http.StatusOK, converseResponse)
+}
+
 func (svc *HttpService) SetupRouter() *gin.Engine {
 	if svc.Config.DebugMode {
 		gin.SetMode(gin.DebugMode)
@@ -234,6 +294,7 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 	router.POST("/api/clone-rt/:user_id", svc.handleRelayCloneRealTime)
 	router.POST("/api/tts-rt/:user_id", svc.handleRelayTextToSpeechRealTime)
 	router.GET("/api/voice-model", svc.handleListVoiceModel)
+	router.POST("/api/converse-single-prompt/:user_id", svc.handleConverseSinglePrompt)
 	router.Static("/resource", "./resource")
 	router.StaticFile("/", "./resource/index.html")
 	return router

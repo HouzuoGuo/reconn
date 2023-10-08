@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Observable, ReplaySubject, combineLatest, fromEvent, of, shareReplay } from 'rxjs';
 import { catchError, exhaustMap, map, startWith, switchMap, tap } from 'rxjs/operators';
-import { AudioRecorderService, ErrorCase, OutputFormat } from './audio_recorder_module';
+import { AudioRecorderService, ErrorCase, OutputFormat } from './audio_recorder.module';
 import { ReadbackResponse, ReadbackService } from './readback.service';
 import { CloneRealtimeResponse, VoiceModelResponse, VoiceService } from './voice.service';
 
