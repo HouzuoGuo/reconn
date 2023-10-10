@@ -15,6 +15,7 @@ func main() {
 	var port int
 	var debugMode bool
 	var addr, voiceServiceAddr, openaiKey, basicAuthUser, basicAuthPassword, voiceModelDir string
+	var dbAddress, dbUser, dbPassword string
 	flag.BoolVar(&debugMode, "debug", false, "start http server in debug mode")
 	flag.IntVar(&port, "port", 8080, "http server listener port")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "http server listener address")
@@ -23,6 +24,10 @@ func main() {
 	flag.StringVar(&voiceServiceAddr, "voicesvcaddr", "localhost:8081", "voice service address (host:port)")
 	flag.StringVar(&openaiKey, "openaikey", "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", "openai API secret key")
 	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "the directory of constructed user voice models used by the voice service")
+
+	flag.StringVar(&dbAddress, "dbaddress", "reconn-user-db.postgres.database.azure.com", "postgresql database host name")
+	flag.StringVar(&dbUser, "dbuser", "reconnadmin", "postgresql database user name")
+	flag.StringVar(&dbPassword, "dbpassword", "BOInscINOnioVc2RK", "postgresql database password")
 	flag.Parse()
 
 	log.Printf("about to start web service on port %d, connect to backend voice service at %q, debug mode? %v, using http basic auth? %v", port, voiceServiceAddr, debugMode, basicAuthUser != "")

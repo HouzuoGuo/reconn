@@ -2,6 +2,27 @@
 
 Be it POC, server-side, client-side - everything can belong here for now.
 
+## Database server
+
+Connect to the database using: `psql -h reconn-user-db.postgres.database.azure.com -U reconnadmin -d postgres`, the database password `BOInscINOnioVc2RK`.
+
+List and create database:
+
+``` shell
+
+postgres=> create database reconn;
+CREATE DATABASE
+postgres=> \l
+                                                             List of databases
+       Name        |     Owner      | Encoding |  Collate   |   Ctype    | ICU Locale | Locale Provider |         Access privileges
+-------------------+----------------+----------+------------+------------+------------+-----------------+-----------------------------------
+ azure_maintenance | azuresu        | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
+ azure_sys         | azuresu        | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
+ postgres          | azure_pg_admin | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
+ reconn            | reconnadmin    | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
+...
+```
+
 ## Web server
 
 ### Start the backend server
