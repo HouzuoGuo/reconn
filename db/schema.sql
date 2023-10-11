@@ -13,14 +13,14 @@ create table if not exists users
 
 create unique index if not exists users_name_index on users (name);
 
--- An AI personality with its own system prompt and voice model.
+-- An AI personality with its own system context prompt and voice model.
 create table if not exists modelled_persons
 (
     id bigserial primary key,
     user_id bigint references users (id) on delete cascade not null,
-    name text not null;
-    -- Background context prompt for the system role, e.g. you are Esther in Shushan.
-    context_prompt text not null;
+    name text not null,
+    -- Contextual, background information for the system role, e.g. you are Esther in Shushan.
+    context_prompt text not null
 );
 create index if not exists modelled_persons_user_id_index on modelled_persons (user_id);
 
@@ -28,8 +28,9 @@ create index if not exists modelled_persons_user_id_index on modelled_persons (u
 create table if not exists voice_samples
 (
     id bigserial primary key,
-    modelled_person_id bigint references modelled_person (id) on delete cascade not null,
-    file_name text not null,
+    modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
+    status text check ( status in ('processing', 'ready') ) not null,
+    file_name text,
     timestamp timestamp with time zone not null
 );
 create index if not exists voice_sample_modelled_person_id_index on voice_samples (modelled_person_id);
@@ -38,26 +39,26 @@ create index if not exists voice_sample_modelled_person_id_index on voice_sample
 create table if not exists voice_models
 (
     id bigserial primary key,
-    voice_sample_id bigint references voice_sample (id) on delete cascade not null,
-    file_name text not null,
+    voice_sample_id bigint references voice_samples (id) on delete cascade not null,
+    status text check ( status in ('processing', 'ready') ) not null,
+    file_name text,
     timestamp timestamp with time zone not null
 );
 
 create index if not exists voice_model_sample_id_index on voice_models (voice_sample_id);
 
--- Text converted to speech using a user's voice model.
+-- Text-to-speech based on an AI personality's voice model.
 create table if not exists inferred_speech
 (
     id bigserial primary key,
-    voice_model_id bigint references voice_models(id) on delete cascade not null,
+    voice_model_id bigint references voice_models (id) on delete cascade not null,
     prompt text not null,
-    file_name text not null,
+    status text check ( status in ('processing', 'ready') ) not null,
+    file_name text,
     timestamp timestamp with time zone not null
 );
 
 create index if not exists inferred_speech_voice_model_id_index on inferred_speech (voice_model_id);
-
-
 
 
 -- TODO FIXME

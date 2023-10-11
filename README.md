@@ -4,7 +4,7 @@ Be it POC, server-side, client-side - everything can belong here for now.
 
 ## Database server
 
-Connect to the database using: `psql -h reconn-user-db.postgres.database.azure.com -U reconnadmin -d postgres`, the database password `BOInscINOnioVc2RK`.
+Connect to the database using: `psql -h reconn-user-db.postgres.database.azure.com -U reconnadmin -d postgres`, the database password is `BOInscINOnioVc2RK`.
 
 List and create database:
 
