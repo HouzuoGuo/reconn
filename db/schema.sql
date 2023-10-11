@@ -29,7 +29,6 @@ create table if not exists voice_samples
 (
     id bigserial primary key,
     modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
-    status text check ( status in ('processing', 'ready') ) not null,
     file_name text,
     timestamp timestamp with time zone not null
 );
@@ -40,6 +39,7 @@ create table if not exists voice_models
 (
     id bigserial primary key,
     voice_sample_id bigint references voice_samples (id) on delete cascade not null,
+    -- Whether a model has been created for the sample yet.
     status text check ( status in ('processing', 'ready') ) not null,
     file_name text,
     timestamp timestamp with time zone not null
@@ -47,37 +47,52 @@ create table if not exists voice_models
 
 create index if not exists voice_model_sample_id_index on voice_models (voice_sample_id);
 
--- Text-to-speech based on an AI personality's voice model.
-create table if not exists inferred_speech
+-- The user's side of conversation - a plain text message.
+create table if not exists user_text_prompts
 (
     id bigserial primary key,
-    voice_model_id bigint references voice_models (id) on delete cascade not null,
-    prompt text not null,
-    status text check ( status in ('processing', 'ready') ) not null,
-    file_name text,
-    timestamp timestamp with time zone not null
+    message text not null
 );
 
-create index if not exists inferred_speech_voice_model_id_index on inferred_speech (voice_model_id);
-
-
--- TODO FIXME
-
--- A single piece of speech in a conversation.
-create table if not exists conversation_speech
+-- The user's side of conversation - a voice message.
+create table if not exists user_voice_prompts
 (
     id bigserial primary key,
-    user_id bigint references users (id) on delete cascade not null,
     file_name text not null,
-    timestamp timestamp with time zone not null
+    -- Whether this voice note has been converted into text.
+    status text check ( status in ('processing', 'ready') ) not null
 );
 
-create table if not exists user_prompt
+--- The user's side of conversation with an AI personality - a voice note or text message intended for an AI personality.
+create table if not exists user_prompts
 (
     id bigserial primary key,
-    user_id bigint references users (id) on delete cascade not null,
-    user_prompt text not null,
-    timestamp timestamp with time zone not null
+    modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
+    timestamp timestamp with time zone not null,
+    -- User's prompt is either a text message.
+    user_text_prompt_id bigint references user_text_prompts (id) on delete cascade,
+    -- Or a voice message to be converted into text.
+    user_voice_prompt_id bigint references user_voice_prompts (id) on delete cascade
 );
 
-create index if not exists inferred_speech_voice_model_id_index on inferred_speech (voice_model_id);
+create index if not exists user_prompt_modelled_person_id_index on user_prompts (modelled_person_id);
+
+--- The AI personality's side of conversation - AI's replies to user's prompts.
+create table if not exists modelled_person_replies
+(
+    id bigserial primary key,
+    modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
+    message text not null,
+    timestamp timestamp with time zone not null
+);
+create index if not exists modelled_person_reply_person_id_index on modelled_person_replies (modelled_person_id);
+
+-- The AI personality's side of conversation - AI's reply in cloned voice model.
+create table if not exists modelled_person_reply_voices
+(
+    id bigserial primary key,
+    modelled_person_reply_id bigint references modelled_person_replies (id) on delete cascade not null,
+    status text check ( status in ('processing', 'ready') ) not null,
+    file_name text
+);
+create index if not exists modelled_person_reply_voice_reply_id_index  on modelled_person_reply_voices (modelled_person_reply_id);
