@@ -1,0 +1,14 @@
+# Install sqlc with: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+# Then stay in reconn/db directory and run:
+# sqlc compile
+# sqlc generate
+
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "query.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "dbgen"
+        out: "dbgen"

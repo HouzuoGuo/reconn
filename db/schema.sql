@@ -14,7 +14,7 @@ create table if not exists users
 create unique index if not exists users_name_index on users (name);
 
 -- An AI personality with its own system context prompt and voice model.
-create table if not exists modelled_persons
+create table if not exists ai_persons
 (
     id bigserial primary key,
     user_id bigint references users (id) on delete cascade not null,
@@ -22,17 +22,17 @@ create table if not exists modelled_persons
     -- Contextual, background information for the system role, e.g. you are Esther in Shushan.
     context_prompt text not null
 );
-create index if not exists modelled_persons_user_id_index on modelled_persons (user_id);
+create index if not exists ai_persons_user_id_index on ai_persons (user_id);
 
 -- Voice recording samples of an AI personality.
 create table if not exists voice_samples
 (
     id bigserial primary key,
-    modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
+    ai_person_id bigint references ai_persons (id) on delete cascade not null,
     file_name text,
     timestamp timestamp with time zone not null
 );
-create index if not exists voice_sample_modelled_person_id_index on voice_samples (modelled_person_id);
+create index if not exists voice_sample_ai_person_id_index on voice_samples (ai_person_id);
 
 -- Voice models of an AI personality.
 create table if not exists voice_models
@@ -67,7 +67,7 @@ create table if not exists user_voice_prompts
 create table if not exists user_prompts
 (
     id bigserial primary key,
-    modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
+    ai_person_id bigint references ai_persons (id) on delete cascade not null,
     timestamp timestamp with time zone not null,
     -- User's prompt is either a text message.
     user_text_prompt_id bigint references user_text_prompts (id) on delete cascade,
@@ -75,24 +75,24 @@ create table if not exists user_prompts
     user_voice_prompt_id bigint references user_voice_prompts (id) on delete cascade
 );
 
-create index if not exists user_prompt_modelled_person_id_index on user_prompts (modelled_person_id);
+create index if not exists user_prompt_ai_person_id_index on user_prompts (ai_person_id);
 
 --- The AI personality's side of conversation - AI's replies to user's prompts.
-create table if not exists modelled_person_replies
+create table if not exists ai_person_replies
 (
     id bigserial primary key,
-    modelled_person_id bigint references modelled_persons (id) on delete cascade not null,
+    ai_person_id bigint references ai_persons (id) on delete cascade not null,
     message text not null,
     timestamp timestamp with time zone not null
 );
-create index if not exists modelled_person_reply_person_id_index on modelled_person_replies (modelled_person_id);
+create index if not exists ai_person_reply_person_id_index on ai_person_replies (ai_person_id);
 
 -- The AI personality's side of conversation - AI's reply in cloned voice model.
-create table if not exists modelled_person_reply_voices
+create table if not exists ai_person_reply_voices
 (
     id bigserial primary key,
-    modelled_person_reply_id bigint references modelled_person_replies (id) on delete cascade not null,
+    ai_person_reply_id bigint references ai_person_replies (id) on delete cascade not null,
     status text check ( status in ('processing', 'ready') ) not null,
     file_name text
 );
-create index if not exists modelled_person_reply_voice_reply_id_index  on modelled_person_reply_voices (modelled_person_reply_id);
+create index if not exists ai_person_reply_voice_reply_id_index  on ai_person_reply_voices (ai_person_reply_id);
