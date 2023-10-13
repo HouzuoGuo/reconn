@@ -1,0 +1,9 @@
+drop table if exists ai_person_reply_voices cascade;
+drop table if exists users cascade;
+drop table if exists ai_persons cascade;
+drop table if exists voice_samples cascade;
+drop table if exists voice_models cascade;
+drop table if exists user_prompts cascade;
+drop table if exists user_text_prompts cascade;
+drop table if exists user_voice_prompts cascade;
+drop table if exists ai_person_replies cascade;
