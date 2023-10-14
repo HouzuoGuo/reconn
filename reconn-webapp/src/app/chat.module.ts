@@ -14,7 +14,7 @@ export interface ReadbackResponse {
 export class ReadbackService {
   constructor(private http: HttpClient) {}
   readback(): Observable<ReadbackResponse> {
-    return this.http.get<ReadbackResponse>("/api/readback");
+    return this.http.get<ReadbackResponse>("/api/debug/greadback");
   }
 }
 
@@ -32,14 +32,14 @@ export class ChatService {
   constructor(readonly http: HttpClient) {}
 
   converseSinglePrompt(userID: string, systemPrompt: string, userPrompt: string): Observable<SinglePromptResponse> {
-    return this.http.post<SinglePromptResponse>("/api/converse-single-prompt/" + userID, JSON.stringify({
+    return this.http.post<SinglePromptResponse>("/api/debug/converse-single-prompt/" + userID, JSON.stringify({
       'systemPrompt': systemPrompt,
       'userPrompt': userPrompt,
     }), { headers: { 'content-type': 'application/json' } });
   }
 
   transcribeRealTime(userID: string, blob: Blob): Observable<TranscribeRealTimeResponse> {
-    return this.http.post<TranscribeRealTimeResponse>("/api/transcribe-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
+    return this.http.post<TranscribeRealTimeResponse>("/api/debug/transcribe-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
   }
 }
 
@@ -61,15 +61,15 @@ export interface CloneRealtimeResponse {
 export class VoiceService {
   constructor(private http: HttpClient) {}
   listVoiceModel(): Observable<VoiceModelResponse> {
-    return this.http.get<VoiceModelResponse>("/api/voice-model");
+    return this.http.get<VoiceModelResponse>("/api/debug/voice-model");
   }
 
   cloneRealTime(userID: string, blob: Blob): Observable<CloneRealtimeResponse> {
-    return this.http.post<CloneRealtimeResponse>("/api/clone-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
+    return this.http.post<CloneRealtimeResponse>("/api/debug/clone-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
   }
 
-  textToSpeechRealTIme(userID: string, text: string, topK: number, topP: number, mineosP: number, semanticTemp: number, waveformTemp: number, fineTemp: number): Observable<Blob> {
-    return this.http.post("/api/tts-rt/" + userID, { text, topK, topP, mineosP, semanticTemp, waveformTemp, fineTemp }, { headers: { 'content-type': 'application/json' }, responseType: 'blob' });
+  textToSpeechRealTime(userID: string, text: string, topK: number, topP: number, mineosP: number, semanticTemp: number, waveformTemp: number, fineTemp: number): Observable<Blob> {
+    return this.http.post("/api/debug/tts-rt/" + userID, { text, topK, topP, mineosP, semanticTemp, waveformTemp, fineTemp }, { headers: { 'content-type': 'application/json' }, responseType: 'blob' });
   }
 }
 

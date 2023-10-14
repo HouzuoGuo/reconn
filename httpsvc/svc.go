@@ -335,14 +335,15 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 	if svc.Config.BasicAuthUser != "" {
 		router.Use(gin.BasicAuth(gin.Accounts{svc.Config.BasicAuthUser: svc.Config.BasicAuthPassword}))
 	}
-	// Read back several parameters of the client's request.
-	router.GET("/api/readback", svc.handleReadback)
-	router.POST("/api/clone-rt/:user_id", svc.handleRelayCloneRealTime)
-	router.POST("/api/tts-rt/:user_id", svc.handleRelayTextToSpeechRealTime)
-	router.GET("/api/voice-model", svc.handleListVoiceModel)
-	router.POST("/api/converse-single-prompt/:user_id", svc.handleConverseSinglePrompt)
-	router.POST("/api/transcribe-rt/:user_id", svc.handleTranscribeRealTime)
+	// Generic endpoints.
 	router.Static("/resource", "./resource")
 	router.StaticFile("/", "./resource/index.html")
+	// Developer-exclusive debug endpoints.
+	router.GET("/api/debug/greadback", svc.handleReadback)
+	router.POST("/api/debug/clone-rt/:user_id", svc.handleRelayCloneRealTime)
+	router.POST("/api/debug/tts-rt/:user_id", svc.handleRelayTextToSpeechRealTime)
+	router.GET("/api/debug/voice-model", svc.handleListVoiceModel)
+	router.POST("/api/debug/converse-single-prompt/:user_id", svc.handleConverseSinglePrompt)
+	router.POST("/api/debug/transcribe-rt/:user_id", svc.handleTranscribeRealTime)
 	return router
 }

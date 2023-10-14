@@ -19,9 +19,9 @@ func TestReadback(t *testing.T) {
 	_, router := setupRouter(t)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/readback", nil)
+	req, _ := http.NewRequest("GET", "/api/debug/greadback", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, `{"address":"","headers":{},"method":"GET","url":"/api/readback"}`, w.Body.String())
+	assert.Equal(t, `{"address":"","headers":{},"method":"GET","url":"/api/debug/greadback"}`, w.Body.String())
 }
