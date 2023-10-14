@@ -17,10 +17,11 @@ type AiPerson struct {
 }
 
 type AiPersonReply struct {
-	ID         int64
-	AiPersonID int64
-	Message    string
-	Timestamp  time.Time
+	ID           int64
+	UserPromptID int64
+	Status       string
+	Message      string
+	Timestamp    time.Time
 }
 
 type AiPersonReplyVoice struct {
@@ -39,22 +40,23 @@ type User struct {
 }
 
 type UserPrompt struct {
-	ID                int64
-	AiPersonID        int64
-	Timestamp         time.Time
-	UserTextPromptID  sql.NullInt64
-	UserVoicePromptID sql.NullInt64
+	ID         int64
+	AiPersonID int64
+	Timestamp  time.Time
 }
 
 type UserTextPrompt struct {
-	ID      int64
-	Message string
+	ID           int64
+	UserPromptID int64
+	Message      string
 }
 
 type UserVoicePrompt struct {
-	ID       int64
-	FileName string
-	Status   string
+	ID            int64
+	UserPromptID  int64
+	Status        string
+	FileName      string
+	Transcription sql.NullString
 }
 
 type VoiceModel struct {

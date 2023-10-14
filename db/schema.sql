@@ -71,9 +71,9 @@ create table if not exists user_voice_prompts
 (
     id bigserial primary key,
     user_prompt_id bigint references user_prompts (id) on delete cascade not null,
-    file_name text not null,
     -- Whether this voice note has been transcribed into text.
     status text check ( status in ('processing', 'ready') ) not null,
+    file_name text not null,
     transcription text
 );
 create index if not exists user_voice_prompt_id_index on user_voice_prompts (user_prompt_id);

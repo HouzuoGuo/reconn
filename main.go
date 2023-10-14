@@ -24,12 +24,13 @@ func main() {
 
 	flag.StringVar(&voiceServiceAddr, "voicesvcaddr", "localhost:8081", "voice service address (host:port)")
 	flag.StringVar(&openaiKey, "openaikey", "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", "openai API secret key")
-	// TODO: remove voiceModelDir after the database layer is ready.
-	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "the directory of constructed user voice models used by the voice service")
 
 	flag.StringVar(&dbAddress, "dbaddress", "reconn-user-db.postgres.database.azure.com", "postgresql database host name")
 	flag.StringVar(&dbUser, "dbuser", "reconnadmin", "postgresql database user name")
 	flag.StringVar(&dbPassword, "dbpassword", "BOInscINOnioVc2RK", "postgresql database password")
+
+	// The voice model directory is used by a developer-exlcusive endpoint. Not for use in production.
+	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "the directory of constructed user voice models used by the voice service")
 	flag.Parse()
 
 	log.Printf("about to start web service on port %d, connect to backend voice service at %q, debug mode? %v, using http basic auth? %v", port, voiceServiceAddr, debugMode, basicAuthUser != "")

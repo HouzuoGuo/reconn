@@ -33,6 +33,57 @@ func (q *Queries) CreateAIPerson(ctx context.Context, arg CreateAIPersonParams) 
 	return i, err
 }
 
+const createAIPersonReply = `-- name: CreateAIPersonReply :one
+insert into ai_person_replies (user_prompt_id, status, message, timestamp) values ($1, $2, $3, $4) returning id, user_prompt_id, status, message, timestamp
+`
+
+type CreateAIPersonReplyParams struct {
+	UserPromptID int64
+	Status       string
+	Message      string
+	Timestamp    time.Time
+}
+
+func (q *Queries) CreateAIPersonReply(ctx context.Context, arg CreateAIPersonReplyParams) (AiPersonReply, error) {
+	row := q.db.QueryRowContext(ctx, createAIPersonReply,
+		arg.UserPromptID,
+		arg.Status,
+		arg.Message,
+		arg.Timestamp,
+	)
+	var i AiPersonReply
+	err := row.Scan(
+		&i.ID,
+		&i.UserPromptID,
+		&i.Status,
+		&i.Message,
+		&i.Timestamp,
+	)
+	return i, err
+}
+
+const createAIPersonReplyVoice = `-- name: CreateAIPersonReplyVoice :one
+insert into ai_person_reply_voices (ai_person_reply_id, status, file_name) values ($1, $2, $3) returning id, ai_person_reply_id, status, file_name
+`
+
+type CreateAIPersonReplyVoiceParams struct {
+	AiPersonReplyID int64
+	Status          string
+	FileName        sql.NullString
+}
+
+func (q *Queries) CreateAIPersonReplyVoice(ctx context.Context, arg CreateAIPersonReplyVoiceParams) (AiPersonReplyVoice, error) {
+	row := q.db.QueryRowContext(ctx, createAIPersonReplyVoice, arg.AiPersonReplyID, arg.Status, arg.FileName)
+	var i AiPersonReplyVoice
+	err := row.Scan(
+		&i.ID,
+		&i.AiPersonReplyID,
+		&i.Status,
+		&i.FileName,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 insert into users (name, password, status) values ($1, $2, $3) returning id, name, password, status, challenge
 `
@@ -52,6 +103,67 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Password,
 		&i.Status,
 		&i.Challenge,
+	)
+	return i, err
+}
+
+const createUserPrompt = `-- name: CreateUserPrompt :one
+insert into user_prompts (ai_person_id, timestamp) values ($1, $2) returning id, ai_person_id, timestamp
+`
+
+type CreateUserPromptParams struct {
+	AiPersonID int64
+	Timestamp  time.Time
+}
+
+func (q *Queries) CreateUserPrompt(ctx context.Context, arg CreateUserPromptParams) (UserPrompt, error) {
+	row := q.db.QueryRowContext(ctx, createUserPrompt, arg.AiPersonID, arg.Timestamp)
+	var i UserPrompt
+	err := row.Scan(&i.ID, &i.AiPersonID, &i.Timestamp)
+	return i, err
+}
+
+const createUserTextPrompt = `-- name: CreateUserTextPrompt :one
+insert into user_text_prompts (user_prompt_id, message) values ($1, $2) returning id, user_prompt_id, message
+`
+
+type CreateUserTextPromptParams struct {
+	UserPromptID int64
+	Message      string
+}
+
+func (q *Queries) CreateUserTextPrompt(ctx context.Context, arg CreateUserTextPromptParams) (UserTextPrompt, error) {
+	row := q.db.QueryRowContext(ctx, createUserTextPrompt, arg.UserPromptID, arg.Message)
+	var i UserTextPrompt
+	err := row.Scan(&i.ID, &i.UserPromptID, &i.Message)
+	return i, err
+}
+
+const createUserVoicePrompt = `-- name: CreateUserVoicePrompt :one
+insert into user_voice_prompts (user_prompt_id, status, file_name, transcription) values ($1, $2, $3, $4) returning id, user_prompt_id, status, file_name, transcription
+`
+
+type CreateUserVoicePromptParams struct {
+	UserPromptID  int64
+	Status        string
+	FileName      string
+	Transcription sql.NullString
+}
+
+func (q *Queries) CreateUserVoicePrompt(ctx context.Context, arg CreateUserVoicePromptParams) (UserVoicePrompt, error) {
+	row := q.db.QueryRowContext(ctx, createUserVoicePrompt,
+		arg.UserPromptID,
+		arg.Status,
+		arg.FileName,
+		arg.Transcription,
+	)
+	var i UserVoicePrompt
+	err := row.Scan(
+		&i.ID,
+		&i.UserPromptID,
+		&i.Status,
+		&i.FileName,
+		&i.Transcription,
 	)
 	return i, err
 }
@@ -173,6 +285,104 @@ func (q *Queries) ListAIPersons(ctx context.Context, userID int64) ([]AiPerson, 
 	return items, nil
 }
 
+const listConversations = `-- name: ListConversations :many
+select u.id as id, u.ai_person_id as ai_person_id, u.timestamp as timestamp,
+t.message as text_message,
+v.status as voice_status, v.file_name as voice_filename, v.transcription as voice_transcription,
+r.status as reply_status, r.message as reply_message, r.timestamp as reply_timestamp,
+rv.status as reply_voice_status, rv.file_name as reply_voice_filename
+from user_prompts u
+left outer join user_text_prompts t on t.user_prompt_id = u.id
+left outer join user_voice_prompts v on v.user_prompt_id = u.id
+left outer join ai_person_replies r on r.user_prompt_id = u.id
+left outer join ai_person_reply_voices rv on rv.ai_person_reply_id = r.id
+where ai_person_id = $1
+`
+
+type ListConversationsRow struct {
+	ID                 int64
+	AiPersonID         int64
+	Timestamp          time.Time
+	TextMessage        sql.NullString
+	VoiceStatus        sql.NullString
+	VoiceFilename      sql.NullString
+	VoiceTranscription sql.NullString
+	ReplyStatus        sql.NullString
+	ReplyMessage       sql.NullString
+	ReplyTimestamp     sql.NullTime
+	ReplyVoiceStatus   sql.NullString
+	ReplyVoiceFilename sql.NullString
+}
+
+func (q *Queries) ListConversations(ctx context.Context, aiPersonID int64) ([]ListConversationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listConversations, aiPersonID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListConversationsRow
+	for rows.Next() {
+		var i ListConversationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AiPersonID,
+			&i.Timestamp,
+			&i.TextMessage,
+			&i.VoiceStatus,
+			&i.VoiceFilename,
+			&i.VoiceTranscription,
+			&i.ReplyStatus,
+			&i.ReplyMessage,
+			&i.ReplyTimestamp,
+			&i.ReplyVoiceStatus,
+			&i.ReplyVoiceFilename,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsers = `-- name: ListUsers :many
+select id, name, password, status, challenge from users
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Password,
+			&i.Status,
+			&i.Challenge,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listVoiceSamples = `-- name: ListVoiceSamples :many
 select id, ai_person_id, file_name, timestamp from voice_samples where ai_person_id = $1 order by id
 `
@@ -216,6 +426,49 @@ type UpdateAIPersonContextPromptByIDParams struct {
 
 func (q *Queries) UpdateAIPersonContextPromptByID(ctx context.Context, arg UpdateAIPersonContextPromptByIDParams) error {
 	_, err := q.db.ExecContext(ctx, updateAIPersonContextPromptByID, arg.ContextPrompt, arg.ID)
+	return err
+}
+
+const updateAIPersonReplyByID = `-- name: UpdateAIPersonReplyByID :exec
+update ai_person_replies set status = $1 and message = $2 where id = $3
+`
+
+type UpdateAIPersonReplyByIDParams struct {
+	Status  string
+	Message string
+	ID      int64
+}
+
+func (q *Queries) UpdateAIPersonReplyByID(ctx context.Context, arg UpdateAIPersonReplyByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateAIPersonReplyByID, arg.Status, arg.Message, arg.ID)
+	return err
+}
+
+const updateAIPersonReplyVoiceStatusByID = `-- name: UpdateAIPersonReplyVoiceStatusByID :exec
+update ai_person_reply_voices set status = $1 where id = $2
+`
+
+type UpdateAIPersonReplyVoiceStatusByIDParams struct {
+	Status string
+	ID     int64
+}
+
+func (q *Queries) UpdateAIPersonReplyVoiceStatusByID(ctx context.Context, arg UpdateAIPersonReplyVoiceStatusByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateAIPersonReplyVoiceStatusByID, arg.Status, arg.ID)
+	return err
+}
+
+const updateUserVoicePromptStatusByID = `-- name: UpdateUserVoicePromptStatusByID :exec
+update user_voice_prompts set status = $1 where id = $2
+`
+
+type UpdateUserVoicePromptStatusByIDParams struct {
+	Status string
+	ID     int64
+}
+
+func (q *Queries) UpdateUserVoicePromptStatusByID(ctx context.Context, arg UpdateUserVoicePromptStatusByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserVoicePromptStatusByID, arg.Status, arg.ID)
 	return err
 }
 
