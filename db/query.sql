@@ -6,9 +6,9 @@ select * from users;
 select * from users where name = $1 limit 1;
 
 -- name: CreateAIPerson :one
-insert into ai_persons (user_id, name, context_prompt) values ($1, $2, $3) returning *;
+insert into ai_persons (user_name, name, context_prompt) values ($1, $2, $3) returning *;
 -- name: ListAIPersons :many
-select * from ai_persons where user_id = $1 order by id;
+select * from ai_persons where user_name = $1 order by id;
 -- name: UpdateAIPersonContextPromptByID :exec
 update ai_persons set context_prompt = $1 where id = $2;
 

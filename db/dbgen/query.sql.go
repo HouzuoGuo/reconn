@@ -12,21 +12,21 @@ import (
 )
 
 const createAIPerson = `-- name: CreateAIPerson :one
-insert into ai_persons (user_id, name, context_prompt) values ($1, $2, $3) returning id, user_id, name, context_prompt
+insert into ai_persons (user_name, name, context_prompt) values ($1, $2, $3) returning id, user_name, name, context_prompt
 `
 
 type CreateAIPersonParams struct {
-	UserID        int64
+	UserName      int64
 	Name          string
 	ContextPrompt string
 }
 
 func (q *Queries) CreateAIPerson(ctx context.Context, arg CreateAIPersonParams) (AiPerson, error) {
-	row := q.db.QueryRowContext(ctx, createAIPerson, arg.UserID, arg.Name, arg.ContextPrompt)
+	row := q.db.QueryRowContext(ctx, createAIPerson, arg.UserName, arg.Name, arg.ContextPrompt)
 	var i AiPerson
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.UserName,
 		&i.Name,
 		&i.ContextPrompt,
 	)
@@ -254,11 +254,11 @@ func (q *Queries) GetVoiceModelByVoiceSample(ctx context.Context, voiceSampleID 
 }
 
 const listAIPersons = `-- name: ListAIPersons :many
-select id, user_id, name, context_prompt from ai_persons where user_id = $1 order by id
+select id, user_name, name, context_prompt from ai_persons where user_name = $1 order by id
 `
 
-func (q *Queries) ListAIPersons(ctx context.Context, userID int64) ([]AiPerson, error) {
-	rows, err := q.db.QueryContext(ctx, listAIPersons, userID)
+func (q *Queries) ListAIPersons(ctx context.Context, userName int64) ([]AiPerson, error) {
+	rows, err := q.db.QueryContext(ctx, listAIPersons, userName)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func (q *Queries) ListAIPersons(ctx context.Context, userID int64) ([]AiPerson, 
 		var i AiPerson
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
+			&i.UserName,
 			&i.Name,
 			&i.ContextPrompt,
 		); err != nil {

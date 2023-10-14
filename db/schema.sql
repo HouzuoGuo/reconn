@@ -17,12 +17,12 @@ create unique index if not exists users_name_index on users (name);
 create table if not exists ai_persons
 (
     id bigserial primary key,
-    user_id bigint references users (id) on delete cascade not null,
+    user_name bigint references users (id) on delete cascade not null,
     name text not null,
     -- Contextual, background information for the system role, e.g. you are Esther in Shushan.
     context_prompt text not null
 );
-create index if not exists ai_persons_user_id_index on ai_persons (user_id);
+create index if not exists ai_persons_user_name_index on ai_persons (user_name);
 
 -- Voice recording samples of an AI personality.
 create table if not exists voice_samples

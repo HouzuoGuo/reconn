@@ -14,7 +14,7 @@ export interface ReadbackResponse {
 export class ReadbackService {
   constructor(private http: HttpClient) {}
   readback(): Observable<ReadbackResponse> {
-    return this.http.get<ReadbackResponse>("/api/debug/greadback");
+    return this.http.get<ReadbackResponse>("/api/debug/readback");
   }
 }
 
