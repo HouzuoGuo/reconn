@@ -36,11 +36,13 @@ func (svc *HttpService) handleListAIPersons(c *gin.Context) {
 
 // handleGetUserByName is a gin handler that retrieves a user by name.
 func (svc *HttpService) handleUpdateAIPerson(c *gin.Context) {
+	aiPersonID, _ := strconv.Atoi(c.Params.ByName("ai_person_id"))
 	var req dbgen.UpdateAIPersonContextPromptByIDParams
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
+	req.ID = int64(aiPersonID)
 	err := svc.Config.Database.UpdateAIPersonContextPromptByID(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())

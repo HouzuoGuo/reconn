@@ -9,11 +9,15 @@ select * from users where name = $1 limit 1;
 insert into ai_persons (user_name, name, context_prompt) values ($1, $2, $3) returning *;
 -- name: ListAIPersons :many
 select * from ai_persons where user_name = $1 order by id;
+-- name: GetAIPerson :one
+select * from ai_persons where id = $1;
 -- name: UpdateAIPersonContextPromptByID :exec
 update ai_persons set context_prompt = $1 where id = $2;
 
 -- name: CreateVoiceSample :one
 insert into voice_samples (ai_person_id, file_name, timestamp) values ($1, $2, $3) returning *;
+-- name: GetVoiceSampleByID :one
+select * from voice_samples where id = $1 limit 1;
 -- name: ListVoiceSamples :many
 select * from voice_samples where ai_person_id = $1 order by id;
 
@@ -21,7 +25,15 @@ select * from voice_samples where ai_person_id = $1 order by id;
 insert into voice_models (voice_sample_id, status, file_name, timestamp) values ($1, $2, $3, $4) returning *;
 -- name: GetVoiceModelByVoiceSample :one
 select * from voice_models where voice_sample_id = $1;
--- name: UpdateVoiceModelStatusByID :exec
+-- name: GetLatestVoiceModel :one
+select m.id as id, m.status as status, m.file_name as file_name, m.timestamp as timestamp,
+a.user_name as user_name, a.name as ai_name, a.context_prompt as ai_context_prompt
+from voice_models m
+join voice_samples s on m.voice_sample_id = m.id
+join ai_persons a on s.ai_person_id = a.id and a.id = $1
+order by m.timestamp desc
+limit 1;
+-- name: UpdateVoiceModelByID :exec
 update voice_models set status = $1 where id = $2;
 
 -- name: CreateUserPrompt :one

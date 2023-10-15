@@ -149,14 +149,15 @@ class VoiceSvc:
         codes = torch.cat([encoded[0] for encoded in encoded_frames], dim=-1).squeeze()
         codes = codes.cpu().numpy()
         semantic_tokens = semantic_tokens.cpu().numpy()
-        model_dest_file = os.path.join(self.voice_model_dir, user_id + ".npz")
+        base_name = user_id + ".npz"
+        model_dest_file = os.path.join(self.voice_model_dir, base_name)
         numpy.savez(
             model_dest_file,
             fine_prompt=codes,
             coarse_prompt=codes[:2, :],
             semantic_prompt=semantic_tokens,
         )
-        return model_dest_file
+        return base_name
 
     def tts(
         self,

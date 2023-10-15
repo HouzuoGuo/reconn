@@ -13,10 +13,14 @@ import (
 )
 
 func main() {
-	var port int
 	var debugMode bool
-	var addr, voiceServiceAddr, openaiKey, basicAuthUser, basicAuthPassword, voiceModelDir string
+	var port int
+	var addr string
+	var basicAuthUser, basicAuthPassword string
+	var voiceServiceAddr, openaiKey string
 	var dbConf db.Config
+	var voiceSampleDir, voiceModelDir, voiceTempModelDir, voiceOutputDir string
+
 	flag.BoolVar(&debugMode, "debug", false, "start http server in debug mode")
 	flag.IntVar(&port, "port", 8080, "http server listener port")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "http server listener address")
@@ -32,8 +36,10 @@ func main() {
 	flag.StringVar(&dbConf.Password, "dbpassword", "BOInscINOnioVc2RK", "postgresql database password")
 	flag.StringVar(&dbConf.Database, "dbname", "reconn", "postgresql database password")
 
-	// The voice model directory is used by a developer-exlcusive endpoint. Not for use in production.
-	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "the directory of constructed user voice models used by the voice service")
+	flag.StringVar(&voiceSampleDir, "voicesampledir", "/tmp/voice_sample_dir", "path to the directory of incoming user voice samples")
+	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "path to the directory of constructed user voice models")
+	flag.StringVar(&voiceTempModelDir, "voicetempmodeldir", "/tmp/voice_temp_model_dir", "path to the directory of temporary user voice models used during TTS")
+	flag.StringVar(&voiceOutputDir, "voiceoutputdir", "/tmp/voice_output_dir", "path to the directory of TTS output files")
 	flag.Parse()
 
 	log.Printf("about to start web service on port %d, connect to backend voice service at %q, debug mode? %v, using http basic auth? %v", port, voiceServiceAddr, debugMode, basicAuthUser != "")
@@ -44,14 +50,21 @@ func main() {
 	}
 
 	httpService, err := httpsvc.New(httpsvc.Config{
-		DebugMode:         debugMode,
-		VoiceServiceAddr:  voiceServiceAddr,
-		OpenAIKey:         openaiKey,
+		DebugMode: debugMode,
+
+		VoiceServiceAddr: voiceServiceAddr,
+		OpenAIKey:        openaiKey,
+
 		BasicAuthUser:     basicAuthUser,
 		BasicAuthPassword: basicAuthPassword,
+
+		LowLevelDB: lowLevelDB,
+		Database:   reconnDB,
+
+		VoiceSampleDir:    voiceSampleDir,
 		VoiceModelDir:     voiceModelDir,
-		LowLevelDB:        lowLevelDB,
-		Database:          reconnDB,
+		VoiceTempModelDir: voiceTempModelDir,
+		VoiceOutputDir:    voiceOutputDir,
 	})
 	if err != nil {
 		log.Fatalf("failed to initialise http service: %v", err)

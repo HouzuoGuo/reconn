@@ -14,8 +14,8 @@ def clone_rt_handler(app: Flask, svc: VoiceSvc):
         app.logger.info(
             f"clone requested for user {user_id}, request body length: {len(req_data)}"
         )
-        model_dest_file = svc.clone(user_id, req_data)
-        return jsonify({"model": model_dest_file}), 200
+        model_dest_base_file = svc.clone(user_id, req_data)
+        return jsonify({"model": model_dest_base_file}), 200
 
 
 # Convert text to speech using the user's voice model.

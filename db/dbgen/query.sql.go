@@ -219,6 +219,57 @@ func (q *Queries) CreateVoiceSample(ctx context.Context, arg CreateVoiceSamplePa
 	return i, err
 }
 
+const getAIPerson = `-- name: GetAIPerson :one
+select id, user_name, name, context_prompt from ai_persons where id = $1
+`
+
+func (q *Queries) GetAIPerson(ctx context.Context, id int64) (AiPerson, error) {
+	row := q.db.QueryRowContext(ctx, getAIPerson, id)
+	var i AiPerson
+	err := row.Scan(
+		&i.ID,
+		&i.UserName,
+		&i.Name,
+		&i.ContextPrompt,
+	)
+	return i, err
+}
+
+const getLatestVoiceModel = `-- name: GetLatestVoiceModel :one
+select m.id as id, m.status as status, m.file_name as file_name, m.timestamp as timestamp,
+a.user_name as user_name, a.name as ai_name, a.context_prompt as ai_context_prompt
+from voice_models m
+join voice_samples s on m.voice_sample_id = m.id
+join ai_persons a on s.ai_person_id = a.id and a.id = $1
+order by m.timestamp desc
+limit 1
+`
+
+type GetLatestVoiceModelRow struct {
+	ID              int64
+	Status          string
+	FileName        sql.NullString
+	Timestamp       time.Time
+	UserName        int64
+	AiName          string
+	AiContextPrompt string
+}
+
+func (q *Queries) GetLatestVoiceModel(ctx context.Context, id int64) (GetLatestVoiceModelRow, error) {
+	row := q.db.QueryRowContext(ctx, getLatestVoiceModel, id)
+	var i GetLatestVoiceModelRow
+	err := row.Scan(
+		&i.ID,
+		&i.Status,
+		&i.FileName,
+		&i.Timestamp,
+		&i.UserName,
+		&i.AiName,
+		&i.AiContextPrompt,
+	)
+	return i, err
+}
+
 const getUserByName = `-- name: GetUserByName :one
 select id, name, password, status, challenge from users where name = $1 limit 1
 `
@@ -247,6 +298,22 @@ func (q *Queries) GetVoiceModelByVoiceSample(ctx context.Context, voiceSampleID 
 		&i.ID,
 		&i.VoiceSampleID,
 		&i.Status,
+		&i.FileName,
+		&i.Timestamp,
+	)
+	return i, err
+}
+
+const getVoiceSampleByID = `-- name: GetVoiceSampleByID :one
+select id, ai_person_id, file_name, timestamp from voice_samples where id = $1 limit 1
+`
+
+func (q *Queries) GetVoiceSampleByID(ctx context.Context, id int64) (VoiceSample, error) {
+	row := q.db.QueryRowContext(ctx, getVoiceSampleByID, id)
+	var i VoiceSample
+	err := row.Scan(
+		&i.ID,
+		&i.AiPersonID,
 		&i.FileName,
 		&i.Timestamp,
 	)
@@ -472,16 +539,16 @@ func (q *Queries) UpdateUserVoicePromptStatusByID(ctx context.Context, arg Updat
 	return err
 }
 
-const updateVoiceModelStatusByID = `-- name: UpdateVoiceModelStatusByID :exec
+const updateVoiceModelByID = `-- name: UpdateVoiceModelByID :exec
 update voice_models set status = $1 where id = $2
 `
 
-type UpdateVoiceModelStatusByIDParams struct {
+type UpdateVoiceModelByIDParams struct {
 	Status string
 	ID     int64
 }
 
-func (q *Queries) UpdateVoiceModelStatusByID(ctx context.Context, arg UpdateVoiceModelStatusByIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateVoiceModelStatusByID, arg.Status, arg.ID)
+func (q *Queries) UpdateVoiceModelByID(ctx context.Context, arg UpdateVoiceModelByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateVoiceModelByID, arg.Status, arg.ID)
 	return err
 }

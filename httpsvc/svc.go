@@ -23,12 +23,19 @@ type Config struct {
 	VoiceServiceAddr string
 	// OpenAIKey is the API key of OpenAI / ChatGPT.
 	OpenAIKey string
-	// VoiceModelDir is the directory of constructed user voice models used by the voice service.
-	VoiceModelDir string
 	// LowLevelDB is an initialised low-level sql.DB database client.
 	LowLevelDB *sql.DB
 	// Database is the high level & strongly typed reconn DB client.
 	Database *dbgen.Queries
+
+	// VoiceSampleDir is the path to the directory of incoming user voice samples.
+	VoiceSampleDir string
+	// VoiceModelDir is path to the directory of constructed user voice models.
+	VoiceModelDir string
+	// VoiceTempModelDir is the path to the directory of temporary user voice models used during TTS.
+	VoiceTempModelDir string
+	// VoiceOutputDir is the path to the directory of TTS output files.
+	VoiceOutputDir string
 }
 
 // HttpService implements HTTP handlers for serving static content, relaying to voice service, and more.
@@ -97,7 +104,16 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 		// Debug AI person endpoints.
 		router.POST("/api/debug/ai_person", svc.handleCreateAIPerson)
 		router.GET("/api/debug/user/:user_name/ai_person", svc.handleListAIPersons)
-		router.PUT("/api/debug/ai_person/:user_id", svc.handleUpdateAIPerson)
+		router.PUT("/api/debug/ai_person/:ai_person_id", svc.handleUpdateAIPerson)
+		// Debug voice sample and model endpoints.
+		router.POST("/api/debug/ai_person/:ai_person_id/voice-sample", svc.handleCreateVoiceSample)
+		router.GET("/api/debug/ai_person/:ai_person_id/voice-sample", svc.handleListVoiceSamples)
+		router.POST("/api/debug/voice-sample/:voice_sample_id/create-model", svc.handleCreateVoiceModel)
+		// Debug conversations.
+		router.POST("/api/debug/ai_person/:ai_person_id/post-text-message", svc.handlePostTextMessage)
+		router.POST("/api/debug/ai_person/:ai_person_id/post-voice-message", svc.handlePostVoiceMessage)
+		router.GET("/api/debug/ai_person/:ai_person_id/conversation", svc.handleGetAIPersonConversation)
+		router.GET("/api/debug/voice-output-file/:file_name", svc.handleGetVoiceOutputFile)
 	}
 	return router
 }
