@@ -3,7 +3,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Observable, ReplaySubject, combineLatest, fromEvent, of, shareReplay } from 'rxjs';
 import { catchError, exhaustMap, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AudioRecorderService, ErrorCase, OutputFormat } from './audio_recorder.module';
-import { ChatService, CloneRealtimeResponse, ReadbackResponse, ReadbackService, SinglePromptResponse, VoiceModelResponse, VoiceService } from './chat.module';
+import { ChatService, CloneRealtimeResponse, ReadbackResponse, ReadbackService, SinglePromptResponse, VoiceModelResponse } from './chat.module';
 
 @Component({
   selector: 'chat',

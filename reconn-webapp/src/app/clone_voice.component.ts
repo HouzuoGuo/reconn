@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { Observable, ReplaySubject, combineLatest, fromEvent, of, shareReplay } from 'rxjs';
 import { catchError, exhaustMap, map, startWith, switchMap, take, tap } from 'rxjs/operators';
 import { AudioRecorderService, ErrorCase, OutputFormat } from './audio_recorder.module';
-import { CloneRealtimeResponse, ReadbackResponse, ReadbackService, VoiceModelResponse, VoiceService } from './chat.module';
+import { CloneRealtimeResponse, ReadbackResponse, ReadbackService, VoiceModelResponse, ChatService} from './chat.module';
 
 @Component({
   selector: 'clone-voice',
@@ -17,7 +17,7 @@ export class CloneVoiceComponent {
   recorderError: Observable<ErrorCase>;
   cloneMessage = new ReplaySubject<string>(1);
 
-  constructor(readonly recorderService: AudioRecorderService, private voiceService: VoiceService) {
+  constructor(readonly recorderService: AudioRecorderService, private chatService: ChatService) {
     this.recorderError = recorderService.recorderError.pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 
@@ -43,7 +43,7 @@ export class CloneVoiceComponent {
     }
     console.log('input recording', this.recording);
     this.cloneMessage.next("Stand by, cloning is in progress.");
-    this.voiceService.cloneRealTime(this.userID, this.recording).pipe(
+    this.chatService.cloneRealTime(this.userID, this.recording).pipe(
       map((cloneResp: CloneRealtimeResponse) => {
         console.log('clone response', cloneResp);
         return 'Cloned to model file: ' + cloneResp.model;

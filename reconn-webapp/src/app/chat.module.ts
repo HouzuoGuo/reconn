@@ -27,22 +27,6 @@ export interface TranscribeRealTimeResponse {
   content: string;
 }
 
-@Injectable()
-export class ChatService {
-  constructor(readonly http: HttpClient) {}
-
-  converseSinglePrompt(userID: string, systemPrompt: string, userPrompt: string): Observable<SinglePromptResponse> {
-    return this.http.post<SinglePromptResponse>("/api/debug/converse-single-prompt/" + userID, JSON.stringify({
-      'systemPrompt': systemPrompt,
-      'userPrompt': userPrompt,
-    }), { headers: { 'content-type': 'application/json' } });
-  }
-
-  transcribeRealTime(userID: string, blob: Blob): Observable<TranscribeRealTimeResponse> {
-    return this.http.post<TranscribeRealTimeResponse>("/api/debug/transcribe-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
-  }
-}
-
 export interface VoiceModelResponse {
   models: Map<string, VoiceModel>;
 }
@@ -57,13 +41,12 @@ export interface CloneRealtimeResponse {
   model: string;
 }
 
-@Injectable()
-export class VoiceService {
-  constructor(private http: HttpClient) {}
-  listVoiceModel(): Observable<VoiceModelResponse> {
-    return this.http.get<VoiceModelResponse>("/api/debug/voice-model");
-  }
 
+@Injectable()
+export class ChatService {
+  constructor(readonly http: HttpClient) {}
+
+  // Debug AI & LLM interaction endpoints.
   cloneRealTime(userID: string, blob: Blob): Observable<CloneRealtimeResponse> {
     return this.http.post<CloneRealtimeResponse>("/api/debug/clone-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
   }
@@ -71,15 +54,34 @@ export class VoiceService {
   textToSpeechRealTime(userID: string, text: string, topK: number, topP: number, mineosP: number, semanticTemp: number, waveformTemp: number, fineTemp: number): Observable<Blob> {
     return this.http.post("/api/debug/tts-rt/" + userID, { text, topK, topP, mineosP, semanticTemp, waveformTemp, fineTemp }, { headers: { 'content-type': 'application/json' }, responseType: 'blob' });
   }
-}
 
+  listVoiceModel(): Observable<VoiceModelResponse> {
+    return this.http.get<VoiceModelResponse>("/api/debug/voice-model");
+  }
+
+  converseSinglePrompt(userID: string, systemPrompt: string, userPrompt: string): Observable<SinglePromptResponse> {
+    return this.http.post<SinglePromptResponse>("/api/debug/converse-single-prompt/" + userID, JSON.stringify({
+      'systemPrompt': systemPrompt,
+      'userPrompt': userPrompt,
+    }), { headers: { 'content-type': 'application/json' } });
+  }
+
+  transcribeRealTime(userID: string, blob: Blob): Observable<TranscribeRealTimeResponse> {
+    return this.http.post<TranscribeRealTimeResponse>("/api/debug/transcribe-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
+  }
+
+  // Debug user endpoints.
+  // Debug AI person endpoints.
+  // Debug voice sample and model endpoints.
+  // Debug conversations.
+
+}
 @NgModule({
   declarations: [],
   imports: [],
   exports: [],
   providers: [
     ChatService,
-    VoiceService,
     ReadbackService,
   ]
 })

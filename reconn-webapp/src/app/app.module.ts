@@ -7,7 +7,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AudioRecorderModule } from './audio_recorder.module';
 import { ChatComponent } from './chat.component';
-import { ChatModule, ReadbackService, VoiceService } from './chat.module';
+import { ChatModule, ReadbackService, } from './chat.module';
 import { CloneVoiceComponent } from './clone_voice.component';
 import { TranscribeComponent } from './transcribe.component';
 import { TTSComponent } from './tts.component';

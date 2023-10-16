@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Observable, fromEvent, of, shareReplay } from 'rxjs';
 import { exhaustMap, startWith } from 'rxjs/operators';
-import { ReadbackResponse, ReadbackService, VoiceModelResponse, VoiceService } from './chat.module';
+import { ReadbackResponse, ReadbackService, VoiceModelResponse, ChatService } from './chat.module';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +15,7 @@ export class AppComponent implements OnInit {
   readbackResp: Observable<ReadbackResponse>;
   voiceModelListResp: Observable<VoiceModelResponse | undefined> = of(undefined);
 
-  constructor(readonly readbackService: ReadbackService, readonly voiceService: VoiceService) {
+  constructor(readonly readbackService: ReadbackService, readonly chatService: ChatService) {
     this.readbackResp = readbackService.readback().pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 
@@ -23,7 +23,7 @@ export class AppComponent implements OnInit {
     this.voiceModelListResp = fromEvent(this.refreshVoiceModelsButton.nativeElement, 'click')
       .pipe(
         startWith(undefined),
-        exhaustMap((click) => this.voiceService.listVoiceModel()),
+        exhaustMap((click) => this.chatService.listVoiceModel()),
         shareReplay({ bufferSize: 1, refCount: true })
       );
   }
