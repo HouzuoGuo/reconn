@@ -34,7 +34,7 @@ func (svc *HttpService) handleCreateVoiceSample(c *gin.Context) {
 	}
 	// Name the voice sample after the time of day.
 	timestamp := time.Now()
-	sampleFileName := fmt.Sprintf("%s-%s.wav", aiPersonID, timestamp.Format(time.RFC3339))
+	sampleFileName := fmt.Sprintf("%d-%s.wav", aiPersonID, timestamp.Format(time.RFC3339))
 	// Save to file on disk and then write to database.
 	if err := ioutil.WriteFile(path.Join(svc.Config.VoiceSampleDir, sampleFileName), wavContent, 0644); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -80,7 +80,7 @@ func (svc *HttpService) handleCreateVoiceModel(c *gin.Context) {
 		return
 	}
 	// Relay the clone request to voice service.
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/clone-rt/%s", svc.Config.VoiceServiceAddr, voiceSampleID), voiceSampleFile)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/clone-rt/%d", svc.Config.VoiceServiceAddr, voiceSampleID), voiceSampleFile)
 	req.Header.Set("content-type", "audio/wav")
 	if err != nil {
 		log.Printf("failed to construct clone-rt request: %v", err)
