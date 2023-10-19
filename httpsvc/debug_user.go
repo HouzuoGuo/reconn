@@ -31,13 +31,3 @@ func (svc *HttpService) handleListUsers(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, users)
 }
-
-// handleGetUserByName is a gin handler that retrieves a user by name.
-func (svc *HttpService) handleGetUserByName(c *gin.Context) {
-	user, err := svc.Config.Database.GetUserByName(c.Request.Context(), c.Params.ByName("user_name"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-	c.JSON(http.StatusOK, user)
-}

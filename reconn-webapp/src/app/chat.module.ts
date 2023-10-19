@@ -56,7 +56,7 @@ export interface User {
 
 export interface AIPerson {
   ID?: number;
-  UserName?: string;
+  UserID?: number;
   Name?: string;
   ContextPrompt?: string;
 }
@@ -106,14 +106,13 @@ export class ChatService {
   }
   // Debug AI person endpoints.
   createAIPerson(aiPerson: AIPerson): Observable<AIPerson> {
-    return this.http.post<User>("/api/debug/ai_person", aiPerson, { headers: { 'content-type': 'application/json' } });
+    return this.http.post<AIPerson>("/api/debug/ai_person", aiPerson, { headers: { 'content-type': 'application/json' } });
   }
-  listAIPersons(userName: string): Observable<AIPerson[]> {
-    return this.http.get<AIPerson[]>("/api/debug/user/" + userName + "/ai_person");
+  listAIPersons(userID: number): Observable<AIPerson[]> {
+    return this.http.get<AIPerson[]>("/api/debug/user/" + userID + "/ai_person");
   }
   updateAIPerson(aiPersonID: number, params: UpdateAIPersonContextPromptByIDParams) {
     return this.http.put<AIPerson[]>("/api/debug/ai_person/" + aiPersonID, params, { headers: { 'content-type': 'application/json' } });
-
   }
   // Debug voice sample and model endpoints.
   // Debug conversations.

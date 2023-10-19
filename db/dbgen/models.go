@@ -11,7 +11,7 @@ import (
 
 type AiPerson struct {
 	ID            int64
-	UserName      int64
+	UserID        int64
 	Name          string
 	ContextPrompt string
 }

@@ -6,9 +6,9 @@ select * from users;
 select * from users where name = $1 limit 1;
 
 -- name: CreateAIPerson :one
-insert into ai_persons (user_name, name, context_prompt) values ($1, $2, $3) returning *;
+insert into ai_persons (user_id, name, context_prompt) values ($1, $2, $3) returning *;
 -- name: ListAIPersons :many
-select * from ai_persons where user_name = $1 order by id;
+select * from ai_persons where user_id = $1 order by id;
 -- name: GetAIPerson :one
 select * from ai_persons where id = $1;
 -- name: UpdateAIPersonContextPromptByID :exec
@@ -27,7 +27,7 @@ insert into voice_models (voice_sample_id, status, file_name, timestamp) values 
 select * from voice_models where voice_sample_id = $1;
 -- name: GetLatestVoiceModel :one
 select m.id as id, m.status as status, m.file_name as file_name, m.timestamp as timestamp,
-a.user_name as user_name, a.name as ai_name, a.context_prompt as ai_context_prompt
+a.user_id as user_id, a.name as ai_name, a.context_prompt as ai_context_prompt
 from voice_models m
 join voice_samples s on m.voice_sample_id = m.id
 join ai_persons a on s.ai_person_id = a.id and a.id = $1

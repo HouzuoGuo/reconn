@@ -1,0 +1,12 @@
+<h4>Create a new user</h4>
+<p>Name: <input type="text" [(ngModel)]="createUserName" /></p>
+<p>Status: <input type="text" [(ngModel)]="createUserStatus" /></p>
+<p><button (click)="createUserClick()">Create user</button></p>
+
+<h4>User list</h4>
+<ng-container *ngIf="userListResp | async as resp">
+    <ul>
+        <li *ngFor="let user of resp">{{ user | json }}</li>
+    </ul>
+</ng-container>
+<button #refreshButton>Refresh list</button>

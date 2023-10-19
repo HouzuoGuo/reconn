@@ -1,0 +1,19 @@
+<h4>Create a AI person</h4>
+<p>User ID: <input type="text" [(ngModel)]="createUserID" /></p>
+<p>AI person name: <input type="text" [(ngModel)]="createAIPersonName" /></p>
+<p>Context prompt: <input type="text" [(ngModel)]="createContextPrompt" /></p>
+<p><button (click)="createAIPersonClick()">Create AI person</button></p>
+
+<h4>AI person list</h4>
+<p>User ID: <input type="text" [(ngModel)]="listUserID" /></p>
+<ng-container *ngIf="listResp | async as resp">
+    <ul>
+        <li *ngFor="let person of resp">{{ person | json }}</li>
+    </ul>
+</ng-container>
+<button #refreshButton>Refresh list</button>
+
+<h4>Update AI person</h4>
+<p>AI person ID: <input type="text" [(ngModel)]="updateAIPersonID" /></p>
+<p>New context prompt: <input type="text" [(ngModel)]="updateAIPersonContextPrompt" /></p>
+<p><button (click)="updateAIPersonClick()">Update AI person</button></p>

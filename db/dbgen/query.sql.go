@@ -12,21 +12,21 @@ import (
 )
 
 const createAIPerson = `-- name: CreateAIPerson :one
-insert into ai_persons (user_name, name, context_prompt) values ($1, $2, $3) returning id, user_name, name, context_prompt
+insert into ai_persons (user_id, name, context_prompt) values ($1, $2, $3) returning id, user_id, name, context_prompt
 `
 
 type CreateAIPersonParams struct {
-	UserName      int64
+	UserID        int64
 	Name          string
 	ContextPrompt string
 }
 
 func (q *Queries) CreateAIPerson(ctx context.Context, arg CreateAIPersonParams) (AiPerson, error) {
-	row := q.db.QueryRowContext(ctx, createAIPerson, arg.UserName, arg.Name, arg.ContextPrompt)
+	row := q.db.QueryRowContext(ctx, createAIPerson, arg.UserID, arg.Name, arg.ContextPrompt)
 	var i AiPerson
 	err := row.Scan(
 		&i.ID,
-		&i.UserName,
+		&i.UserID,
 		&i.Name,
 		&i.ContextPrompt,
 	)
@@ -220,7 +220,7 @@ func (q *Queries) CreateVoiceSample(ctx context.Context, arg CreateVoiceSamplePa
 }
 
 const getAIPerson = `-- name: GetAIPerson :one
-select id, user_name, name, context_prompt from ai_persons where id = $1
+select id, user_id, name, context_prompt from ai_persons where id = $1
 `
 
 func (q *Queries) GetAIPerson(ctx context.Context, id int64) (AiPerson, error) {
@@ -228,7 +228,7 @@ func (q *Queries) GetAIPerson(ctx context.Context, id int64) (AiPerson, error) {
 	var i AiPerson
 	err := row.Scan(
 		&i.ID,
-		&i.UserName,
+		&i.UserID,
 		&i.Name,
 		&i.ContextPrompt,
 	)
@@ -237,7 +237,7 @@ func (q *Queries) GetAIPerson(ctx context.Context, id int64) (AiPerson, error) {
 
 const getLatestVoiceModel = `-- name: GetLatestVoiceModel :one
 select m.id as id, m.status as status, m.file_name as file_name, m.timestamp as timestamp,
-a.user_name as user_name, a.name as ai_name, a.context_prompt as ai_context_prompt
+a.user_id as user_id, a.name as ai_name, a.context_prompt as ai_context_prompt
 from voice_models m
 join voice_samples s on m.voice_sample_id = m.id
 join ai_persons a on s.ai_person_id = a.id and a.id = $1
@@ -250,7 +250,7 @@ type GetLatestVoiceModelRow struct {
 	Status          string
 	FileName        sql.NullString
 	Timestamp       time.Time
-	UserName        int64
+	UserID          int64
 	AiName          string
 	AiContextPrompt string
 }
@@ -263,7 +263,7 @@ func (q *Queries) GetLatestVoiceModel(ctx context.Context, id int64) (GetLatestV
 		&i.Status,
 		&i.FileName,
 		&i.Timestamp,
-		&i.UserName,
+		&i.UserID,
 		&i.AiName,
 		&i.AiContextPrompt,
 	)
@@ -321,11 +321,11 @@ func (q *Queries) GetVoiceSampleByID(ctx context.Context, id int64) (VoiceSample
 }
 
 const listAIPersons = `-- name: ListAIPersons :many
-select id, user_name, name, context_prompt from ai_persons where user_name = $1 order by id
+select id, user_id, name, context_prompt from ai_persons where user_id = $1 order by id
 `
 
-func (q *Queries) ListAIPersons(ctx context.Context, userName int64) ([]AiPerson, error) {
-	rows, err := q.db.QueryContext(ctx, listAIPersons, userName)
+func (q *Queries) ListAIPersons(ctx context.Context, userID int64) ([]AiPerson, error) {
+	rows, err := q.db.QueryContext(ctx, listAIPersons, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +335,7 @@ func (q *Queries) ListAIPersons(ctx context.Context, userName int64) ([]AiPerson
 		var i AiPerson
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserName,
+			&i.UserID,
 			&i.Name,
 			&i.ContextPrompt,
 		); err != nil {

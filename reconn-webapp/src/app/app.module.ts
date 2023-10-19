@@ -11,6 +11,8 @@ import { ChatModule, ReadbackService, } from './chat.module';
 import { CloneVoiceComponent } from './clone_voice.component';
 import { TranscribeComponent } from './transcribe.component';
 import { TTSComponent } from './tts.component';
+import { AIPersonManagementComponent } from './ai-person-mgmt.component';
+import { UserManagementComponent } from './user-mgmt.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +21,8 @@ import { TTSComponent } from './tts.component';
     TTSComponent,
     ChatComponent,
     TranscribeComponent,
+    AIPersonManagementComponent,
+    UserManagementComponent,
   ],
   imports: [
     BrowserModule,

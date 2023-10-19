@@ -100,10 +100,9 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 		// Debug user endpoints.
 		router.POST("/api/debug/user", svc.handleCreateUser)
 		router.GET("/api/debug/user", svc.handleListUsers)
-		router.GET("/api/debug/user/:user_name", svc.handleGetUserByName)
 		// Debug AI person endpoints.
 		router.POST("/api/debug/ai_person", svc.handleCreateAIPerson)
-		router.GET("/api/debug/user/:user_name/ai_person", svc.handleListAIPersons)
+		router.GET("/api/debug/user/:user_id/ai_person", svc.handleListAIPersons)
 		router.PUT("/api/debug/ai_person/:ai_person_id", svc.handleUpdateAIPerson)
 		// Debug voice sample and model endpoints.
 		router.POST("/api/debug/ai_person/:ai_person_id/voice-sample", svc.handleCreateVoiceSample)
