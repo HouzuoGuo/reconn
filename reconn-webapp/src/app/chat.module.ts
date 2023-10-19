@@ -41,6 +41,30 @@ export interface CloneRealtimeResponse {
   model: string;
 }
 
+export interface SqlNullString {
+  String?: string;
+  Valid?: boolean;
+}
+
+export interface User {
+  ID?: number;
+  Name?: string;
+  Password?: SqlNullString;
+  Status?: string;
+  Challenge?: SqlNullString;
+}
+
+export interface AIPerson {
+  ID?: number;
+  UserName?: string;
+  Name?: string;
+  ContextPrompt?: string;
+}
+
+export interface UpdateAIPersonContextPromptByIDParams {
+  ID?: number;
+  ContextPrompt?: string;
+}
 
 @Injectable()
 export class ChatService {
@@ -71,7 +95,26 @@ export class ChatService {
   }
 
   // Debug user endpoints.
+  createUser(user: User): Observable<User> {
+    return this.http.post<User>("/api/debug/user", user, { headers: { 'content-type': 'application/json' } });
+  }
+  listUsers(): Observable<User[]> {
+    return this.http.get<User[]>("/api/debug/user",);
+  }
+  getUserByName(name: string): Observable<User> {
+    return this.http.get<User>("/api/debug/user/" + name);
+  }
   // Debug AI person endpoints.
+  createAIPerson(aiPerson: AIPerson): Observable<AIPerson> {
+    return this.http.post<User>("/api/debug/ai_person", aiPerson, { headers: { 'content-type': 'application/json' } });
+  }
+  listAIPersons(userName: string): Observable<AIPerson[]> {
+    return this.http.get<AIPerson[]>("/api/debug/user/" + userName + "/ai_person");
+  }
+  updateAIPerson(aiPersonID: number, params: UpdateAIPersonContextPromptByIDParams) {
+    return this.http.put<AIPerson[]>("/api/debug/ai_person/" + aiPersonID, params, { headers: { 'content-type': 'application/json' } });
+
+  }
   // Debug voice sample and model endpoints.
   // Debug conversations.
 
