@@ -66,6 +66,82 @@ export interface UpdateAIPersonContextPromptByIDParams {
   ContextPrompt?: string;
 }
 
+export interface VoiceSample {
+  ID?: number;
+  AiPersonID?: number;
+  FileName?: SqlNullString;
+  Timestamp?: string;
+}
+
+export interface VoiceModel {
+  ID?: number;
+  VoiceSampleID?: number;
+  Status?: string;
+  FileName?: SqlNullString;
+  Timestamp?: string;
+}
+
+export interface UserPrompt {
+  ID?: number;
+  AiPersonID?: number;
+  Timestamp?: string;
+}
+
+export interface UserTextPrompt {
+  ID?: number;
+  UserPromptID?: number;
+  Message?: string;
+}
+
+export interface UserVoicePrompt {
+  ID?: number;
+  UserPromptID?: number;
+  Status?: string;
+  FileName?: string;
+  Transcription?: SqlNullString;
+}
+
+export interface AiPersonReply {
+  ID?: number;
+  UserPromptID?: number;
+  Status?: string;
+  Message?: string;
+  Timestamp?: string;
+}
+
+export interface AiPersonReplyVoice {
+  ID?: number;
+  AiPersonReplyID?: number;
+  Status?: string;
+  FileName?: SqlNullString;
+}
+
+export interface ListConversationsRow {
+  ID?: number;
+  AiPersonID?: number;
+  Timestamp?: string;
+  TextMessage?: SqlNullString;
+  VoiceStatus?: SqlNullString;
+  VoiceFilename?: SqlNullString;
+  VoiceTranscription?: SqlNullString;
+  ReplyStatus?: SqlNullString;
+  ReplyMessage?: SqlNullString;
+  ReplyTimestamp?: string;
+  ReplyVoiceStatus?: SqlNullString;
+  ReplyVoiceFilename?: SqlNullString;
+}
+
+export interface GetLatestVoiceModelRow {
+  ID?: number;
+  Status?: string;
+  FileName?: SqlNullString;
+  Timestamp?: string;
+  UserID?: number;
+  AiName?: string;
+  AiContextPrompt?: string;
+}
+
+
 @Injectable()
 export class ChatService {
   constructor(readonly http: HttpClient) {}
@@ -115,7 +191,28 @@ export class ChatService {
     return this.http.put<AIPerson[]>("/api/debug/ai_person/" + aiPersonID, params, { headers: { 'content-type': 'application/json' } });
   }
   // Debug voice sample and model endpoints.
+  createVoiceSample(aiPersonID: number, blob: Blob): Observable<VoiceSample> {
+    return this.http.post<VoiceSample>("/api/debug/ai_person/" + aiPersonID + "/voice-sample", blob, { headers: { 'content-type': 'audio/wav' } });
+  }
+  listVoiceSamples(aiPersonID: number): Observable<VoiceSample[]> {
+    return this.http.get<VoiceSample[]>("/api/debug/ai_person/" + aiPersonID + "/voice-sample");
+  }
+  createVoiceModel(voiceSampleID: number): Observable<VoiceModel> {
+    return this.http.post<VoiceModel>("/api/debug/voice-sample/" + voiceSampleID + "/create-model", {}, { headers: { 'content-type': 'application/json' } });
+  }
   // Debug conversations.
+  postTextMessage(aiPersonID: number, message: string): Observable<AiPersonReplyVoice> {
+    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post-text-message", { message }, { headers: { 'content-type': 'application/json' } });
+  }
+  postVoiceMessage(aiPersonID: number, blob: Blob): Observable<AiPersonReplyVoice> {
+    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post-voice-message", blob, { headers: { 'content-type': 'audio/wav' } });
+  }
+  listConversation(aiPersonID: number): Observable<ListConversationsRow[]> {
+    return this.http.post<ListConversationsRow[]>("/api/debug/ai_person/" + aiPersonID + "/conversation", {}, { headers: { 'content-type': 'application/json' } });
+  }
+  getVoiceOutputFile(fileName: string): Observable<Blob> {
+    return this.http.post("/api/debug/voice-output-file/" + fileName, {}, { headers: { 'content-type': 'application/json' }, responseType: 'blob' });
+  }
 
 }
 @NgModule({
