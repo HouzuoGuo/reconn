@@ -1,5 +1,7 @@
-<p>User ID (unused for now): <input type="text" [(ngModel)]="userID" /></p>
-<p>Record your speech: <button (click)="recordButtonClick()">{{ recordButtonCaption }}</button></p>
+<p>
+  Record a speech:
+  <button (click)="recordButtonClick()">{{ recordButtonCaption }}</button>
+</p>
 <p *ngIf="recorderError | async as err">{{ err | json }}</p>
 <p><button (click)="transcribeButtonClick()">Transcribe</button></p>
 <p>{{ transcribeStatus | async }}</p>

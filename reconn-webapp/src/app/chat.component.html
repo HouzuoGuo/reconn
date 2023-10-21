@@ -1,9 +1,10 @@
-<p>User ID (unused for now): <input type="text" [(ngModel)]="userID" /></p>
-<p>Context (aka "system prompt") for ChatGPT:
-    <textarea [(ngModel)]="systemPrompt" rows=5 cols=80></textarea>
+<p>
+  Context (aka "system prompt") for ChatGPT:
+  <textarea [(ngModel)]="systemPrompt" rows="5" cols="80"></textarea>
 </p>
-<p>Inquiry for ChatGPT (aka "user prompt"):
-    <textarea [(ngModel)]="userPrompt" rows=5 cols=80></textarea>
+<p>
+  Inquiry for ChatGPT (aka "user prompt"):
+  <textarea [(ngModel)]="userPrompt" rows="5" cols="80"></textarea>
 </p>
 <p><button #singlePromptButton>Ask ChatGPT</button></p>
 <p>ChatGPT reply: {{ (singlePromptResponse | async)?.reply }}</p>

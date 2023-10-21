@@ -95,8 +95,8 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 		router.POST("/api/debug/clone-rt/:user_id", svc.handleRelayCloneRealTime)
 		router.POST("/api/debug/tts-rt/:user_id", svc.handleRelayTextToSpeechRealTime)
 		router.GET("/api/debug/voice-model", svc.handleListVoiceModel)
-		router.POST("/api/debug/converse-single-prompt/:user_id", svc.handleConverseSinglePrompt)
-		router.POST("/api/debug/transcribe-rt/:user_id", svc.handleTranscribeRealTime)
+		router.POST("/api/debug/converse-single-prompt", svc.handleConverseSinglePrompt)
+		router.POST("/api/debug/transcribe-rt", svc.handleTranscribeRealTime)
 		// Debug user endpoints.
 		router.POST("/api/debug/user", svc.handleCreateUser)
 		router.GET("/api/debug/user", svc.handleListUsers)
@@ -105,14 +105,15 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 		router.GET("/api/debug/user/:user_id/ai_person", svc.handleListAIPersons)
 		router.PUT("/api/debug/ai_person/:ai_person_id", svc.handleUpdateAIPerson)
 		// Debug voice sample and model endpoints.
-		router.POST("/api/debug/ai_person/:ai_person_id/voice-sample", svc.handleCreateVoiceSample)
-		router.GET("/api/debug/ai_person/:ai_person_id/voice-sample", svc.handleListVoiceSamples)
-		router.POST("/api/debug/voice-sample/:voice_sample_id/create-model", svc.handleCreateVoiceModel)
+		router.POST("/api/debug/ai_person/:ai_person_id/voice_sample", svc.handleCreateVoiceSample)
+		router.GET("/api/debug/ai_person/:ai_person_id/voice_sample", svc.handleListVoiceSamples)
+		router.GET("/api/debug/ai_person/:ai_person_id/latest_model", svc.handleGetLatestVoiceModel)
+		router.POST("/api/debug/voice_sample/:voice_sample_id/create_model", svc.handleCreateVoiceModel)
 		// Debug conversations.
-		router.POST("/api/debug/ai_person/:ai_person_id/post-text-message", svc.handlePostTextMessage)
-		router.POST("/api/debug/ai_person/:ai_person_id/post-voice-message", svc.handlePostVoiceMessage)
+		router.POST("/api/debug/ai_person/:ai_person_id/post_text_message", svc.handlePostTextMessage)
+		router.POST("/api/debug/ai_person/:ai_person_id/post_voice_message", svc.handlePostVoiceMessage)
 		router.GET("/api/debug/ai_person/:ai_person_id/conversation", svc.handleGetAIPersonConversation)
-		router.GET("/api/debug/voice-output-file/:file_name", svc.handleGetVoiceOutputFile)
+		router.GET("/api/debug/voice_output_file/:file_name", svc.handleGetVoiceOutputFile)
 	}
 	return router
 }

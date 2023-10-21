@@ -29,7 +29,7 @@ select * from voice_models where voice_sample_id = $1;
 select m.id as id, m.status as status, m.file_name as file_name, m.timestamp as timestamp,
 a.user_id as user_id, a.name as ai_name, a.context_prompt as ai_context_prompt
 from voice_models m
-join voice_samples s on m.voice_sample_id = m.id
+join voice_samples s on m.voice_sample_id = s.id
 join ai_persons a on s.ai_person_id = a.id and a.id = $1
 order by m.timestamp desc
 limit 1;

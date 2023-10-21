@@ -63,6 +63,17 @@ func (svc *HttpService) handleListVoiceSamples(c *gin.Context) {
 	c.JSON(http.StatusOK, voiceSamples)
 }
 
+// handleGetLatestVoiceModel is a gin handler that retrieves the latest voice model of an AI person.
+func (svc *HttpService) handleGetLatestVoiceModel(c *gin.Context) {
+	aiPersonID, _ := strconv.Atoi(c.Params.ByName("ai_person_id"))
+	latestModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, latestModel)
+}
+
 // Update voice model status by ID is not needed for debugging.
 
 // handleCreateVoiceModel is a gin handler that creates a new voice model by relaying a clone request to voice service in real time.

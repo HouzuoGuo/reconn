@@ -12,7 +12,6 @@ import { ChatService, CloneRealtimeResponse, ReadbackResponse, ReadbackService, 
 export class ChatComponent implements OnInit {
   @ViewChild('singlePromptButton', { static: true }) singlePromptButton!: ElementRef;
 
-  userID = 'unused';
   systemPrompt = 'You are a helpful AI assistant.';
   userPrompt = 'What food is popular on Purim? What is the date in 2024?'
   singlePromptResponse!: Observable<SinglePromptResponse>;
@@ -23,7 +22,7 @@ export class ChatComponent implements OnInit {
   ngOnInit() {
     this.singlePromptResponse = fromEvent(this.singlePromptButton.nativeElement, 'click')
       .pipe(
-        exhaustMap((click) => this.chatService.converseSinglePrompt(this.userID, this.systemPrompt, this.userPrompt)),
+        exhaustMap((click) => this.chatService.converseSinglePrompt(this.systemPrompt, this.userPrompt)),
         shareReplay({ bufferSize: 1, refCount: true })
       );
   }

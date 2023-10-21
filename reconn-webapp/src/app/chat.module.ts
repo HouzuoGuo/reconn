@@ -159,15 +159,15 @@ export class ChatService {
     return this.http.get<VoiceModelResponse>("/api/debug/voice-model");
   }
 
-  converseSinglePrompt(userID: string, systemPrompt: string, userPrompt: string): Observable<SinglePromptResponse> {
-    return this.http.post<SinglePromptResponse>("/api/debug/converse-single-prompt/" + userID, JSON.stringify({
+  converseSinglePrompt(systemPrompt: string, userPrompt: string): Observable<SinglePromptResponse> {
+    return this.http.post<SinglePromptResponse>("/api/debug/converse-single-prompt", JSON.stringify({
       'systemPrompt': systemPrompt,
       'userPrompt': userPrompt,
     }), { headers: { 'content-type': 'application/json' } });
   }
 
-  transcribeRealTime(userID: string, blob: Blob): Observable<TranscribeRealTimeResponse> {
-    return this.http.post<TranscribeRealTimeResponse>("/api/debug/transcribe-rt/" + userID, blob, { headers: { 'content-type': 'audio/wav' } });
+  transcribeRealTime(blob: Blob): Observable<TranscribeRealTimeResponse> {
+    return this.http.post<TranscribeRealTimeResponse>("/api/debug/transcribe-rt", blob, { headers: { 'content-type': 'audio/wav' } });
   }
 
   // Debug user endpoints.
@@ -192,20 +192,23 @@ export class ChatService {
   }
   // Debug voice sample and model endpoints.
   createVoiceSample(aiPersonID: number, blob: Blob): Observable<VoiceSample> {
-    return this.http.post<VoiceSample>("/api/debug/ai_person/" + aiPersonID + "/voice-sample", blob, { headers: { 'content-type': 'audio/wav' } });
+    return this.http.post<VoiceSample>("/api/debug/ai_person/" + aiPersonID + "/voice_sample", blob, { headers: { 'content-type': 'audio/wav' } });
   }
   listVoiceSamples(aiPersonID: number): Observable<VoiceSample[]> {
-    return this.http.get<VoiceSample[]>("/api/debug/ai_person/" + aiPersonID + "/voice-sample");
+    return this.http.get<VoiceSample[]>("/api/debug/ai_person/" + aiPersonID + "/voice_sample");
   }
   createVoiceModel(voiceSampleID: number): Observable<VoiceModel> {
-    return this.http.post<VoiceModel>("/api/debug/voice-sample/" + voiceSampleID + "/create-model", {}, { headers: { 'content-type': 'application/json' } });
+    return this.http.post<VoiceModel>("/api/debug/voice_sample/" + voiceSampleID + "/create_model", {}, { headers: { 'content-type': 'application/json' } });
+  }
+  getLatestVoiceModel(aiPersonID: number): Observable<GetLatestVoiceModelRow> {
+    return this.http.get<GetLatestVoiceModelRow>("/api/debug/ai_person/" + aiPersonID + "/latest_model");
   }
   // Debug conversations.
   postTextMessage(aiPersonID: number, message: string): Observable<AiPersonReplyVoice> {
-    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post-text-message", { message }, { headers: { 'content-type': 'application/json' } });
+    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_text_message", { message }, { headers: { 'content-type': 'application/json' } });
   }
   postVoiceMessage(aiPersonID: number, blob: Blob): Observable<AiPersonReplyVoice> {
-    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post-voice-message", blob, { headers: { 'content-type': 'audio/wav' } });
+    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_voice_message", blob, { headers: { 'content-type': 'audio/wav' } });
   }
   listConversation(aiPersonID: number): Observable<ListConversationsRow[]> {
     return this.http.post<ListConversationsRow[]>("/api/debug/ai_person/" + aiPersonID + "/conversation", {}, { headers: { 'content-type': 'application/json' } });

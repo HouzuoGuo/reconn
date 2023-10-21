@@ -182,11 +182,6 @@ type ConverseSinglePromptResponse struct {
 // handleConverseWithSystemRole is a gin handler that converses with chatgpt in a singular prompt - 1xQ for 1xA.
 // This is only used for experimenting, do not expose to the Internet.
 func (svc *HttpService) handleConverseSinglePrompt(c *gin.Context) {
-	userID := c.Params.ByName("user_id")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "user_id must be present"})
-		return
-	}
 	var converseRequest ConverseSinglePromptRequest
 	if err := c.BindJSON(&converseRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to deserialise request"})
@@ -220,7 +215,7 @@ func (svc *HttpService) handleConverseSinglePrompt(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to invoke chat completion"})
 		return
 	}
-	log.Printf("chat completion for user ID %v: %+v", userID, resp)
+	log.Printf("chat completion response: %+v", resp)
 	var converseResponse ConverseSinglePromptResponse
 	for _, choice := range resp.Choices {
 		converseResponse.Reply += choice.Message.Content + " "
@@ -238,11 +233,6 @@ type TranscribeRealTimeRespons struct {
 func (svc *HttpService) handleTranscribeRealTime(c *gin.Context) {
 	if c.ContentType() != "audio/wav" && c.ContentType() != "audio/x-wav" && c.ContentType() != "audio/wave" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "request content type must be wave"})
-		return
-	}
-	userID := c.Params.ByName("user_id")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "user_id must be present"})
 		return
 	}
 	wavContent, err := ioutil.ReadAll(c.Request.Body)
@@ -267,6 +257,6 @@ func (svc *HttpService) handleTranscribeRealTime(c *gin.Context) {
 		Language: resp.Language,
 		Text:     resp.Text,
 	}
-	log.Printf("transcription for user ID %v: %+v", userID, resp)
+	log.Printf("transcription response: %+v", resp)
 	c.JSON(http.StatusOK, transcribeRealTimeRespons)
 }

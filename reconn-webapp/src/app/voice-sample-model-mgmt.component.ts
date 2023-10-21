@@ -22,6 +22,12 @@ export class VoiceSampleModelManagementComponent implements OnInit {
   listAIPersonID = '';
   listResp: Observable<VoiceSample[]> = EMPTY;
 
+  // Create voice model.
+  createModelVoiceSampleID = '';
+
+  // Get latest voice model.
+  getLatestModelAIPersonID = '';
+
   constructor(readonly recorderService: AudioRecorderService, readonly chatService: ChatService) {
     recorderService.recorderError.subscribe((error) => {
       this.recordingStatus.next(JSON.stringify(error));
@@ -59,12 +65,26 @@ export class VoiceSampleModelManagementComponent implements OnInit {
     }
     console.log('input recording', this.recording);
     this.chatService.createVoiceSample(Number(this.createAIPersonID), this.recording).pipe(
-      map((resp: VoiceSample) => {
-        return resp;
-      }),
-      catchError((err: HttpErrorResponse) => {
-        return of(err);
-      })
+      map((resp) => resp),
+      catchError((err) => of(err))
+    ).subscribe((result: unknown) => {
+      alert(JSON.stringify(result));
+    });
+  }
+
+  createModelClick() {
+    this.chatService.createVoiceModel(Number(this.createModelVoiceSampleID)).pipe(
+      map((resp) => resp),
+      catchError((err) => of(err))
+    ).subscribe((result: unknown) => {
+      alert(JSON.stringify(result));
+    });
+  }
+
+  getLatestModelClick() {
+    this.chatService.getLatestVoiceModel(Number(this.getLatestModelAIPersonID)).pipe(
+      map((resp) => resp),
+      catchError((err) => of(err))
     ).subscribe((result: unknown) => {
       alert(JSON.stringify(result));
     });

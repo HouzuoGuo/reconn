@@ -10,7 +10,6 @@ import { ChatService, ReadbackResponse, ReadbackService, TranscribeRealTimeRespo
   templateUrl: './transcribe.component.html',
 })
 export class TranscribeComponent {
-  userID = 'unused';
   recordingInProgress = false;
   recordButtonCaption = 'Start recording';
   recording?: Blob;
@@ -43,7 +42,7 @@ export class TranscribeComponent {
     }
     console.log('input recording', this.recording);
     this.transcribeStatus.next("Stand by, transcription is in progress.");
-    this.chatService.transcribeRealTime(this.userID, this.recording).pipe(
+    this.chatService.transcribeRealTime(this.recording).pipe(
       map((resp: TranscribeRealTimeResponse) => {
         console.log('transcription response', resp);
         return 'Transcription: ' + resp.content;
