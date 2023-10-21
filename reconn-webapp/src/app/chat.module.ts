@@ -213,8 +213,8 @@ export class ChatService {
   getVoiceOutputFile(fileName: string): Observable<Blob> {
     return this.http.post("/api/debug/voice-output-file/" + fileName, {}, { headers: { 'content-type': 'application/json' }, responseType: 'blob' });
   }
-
 }
+
 @NgModule({
   declarations: [],
   imports: [],

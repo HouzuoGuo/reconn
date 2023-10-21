@@ -1,0 +1,17 @@
+<h4>Upload voice sample</h4>
+<p>AI person ID: <input type="text" [(ngModel)]="createAIPersonID" /></p>
+<p>
+  Record your voice:
+  <button (click)="recordButtonClick()">{{ recordButtonCaption }}</button>
+</p>
+<p *ngIf="recordingStatus | async as status">{{ status }}</p>
+<button (click)="uploadButtonClick()">Upload voice sample</button>
+
+<h4>Voice sample list</h4>
+<p>AI person ID: <input type="text" [(ngModel)]="listAIPersonID" /></p>
+<ng-container *ngIf="listResp | async as resp">
+  <ul>
+    <li *ngFor="let sample of resp">{{ sample | json }}</li>
+  </ul>
+</ng-container>
+<button #refreshButton>Refresh list</button>
