@@ -246,7 +246,7 @@ func (svc *HttpService) handleTranscribeRealTime(c *gin.Context) {
 		// The file path is part of the form submission, the extension name must accurately indicate the audio format.
 		FilePath: "input.wav",
 		Reader:   bytes.NewReader(wavContent),
-		Format:   openai.AudioResponseFormatText,
+		Format:   openai.AudioResponseFormatJSON,
 	})
 	if err != nil {
 		log.Printf("failed to invoke whisper: %v", err)
