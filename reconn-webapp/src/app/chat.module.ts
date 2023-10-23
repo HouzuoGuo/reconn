@@ -210,11 +210,11 @@ export class ChatService {
   postVoiceMessage(aiPersonID: number, blob: Blob): Observable<AiPersonReplyVoice> {
     return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_voice_message", blob, { headers: { 'content-type': 'audio/wav' } });
   }
-  listConversation(aiPersonID: number): Observable<ListConversationsRow[]> {
-    return this.http.post<ListConversationsRow[]>("/api/debug/ai_person/" + aiPersonID + "/conversation", {}, { headers: { 'content-type': 'application/json' } });
+  listConversation(aiPersonID: number, limit: number): Observable<ListConversationsRow[]> {
+    return this.http.get<ListConversationsRow[]>("/api/debug/ai_person/" + aiPersonID + "/conversation?limit=" + limit);
   }
   getVoiceOutputFile(fileName: string): Observable<Blob> {
-    return this.http.post("/api/debug/voice-output-file/" + fileName, {}, { headers: { 'content-type': 'application/json' }, responseType: 'blob' });
+    return this.http.get("/api/debug/voice_output_file/" + fileName, { responseType: 'blob' });
   }
 }
 

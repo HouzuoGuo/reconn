@@ -59,21 +59,57 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		return
 	}
 	log.Printf("ai person and model: %+v", aiPersonAndModel)
-	// Feed both context prompt and text prompt to LLM.
-	resp, err := svc.OpenAIClient.CreateChatCompletion(c.Request.Context(), openai.ChatCompletionRequest{
-		Model: "gpt-4",
+	// Read the latest 10 messages back and forth.
+	recentMessages, err := svc.Config.Database.ListConversations(c.Request.Context(), dbgen.ListConversationsParams{
+		AiPersonID: int64(aiPersonID),
+		Limit:      10,
+	})
+	if err != nil {
+		log.Printf("get latest conversations error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	chatCompletionRequest := openai.ChatCompletionRequest{
+		Model:     "gpt-4",
+		MaxTokens: 100, // good for about 500 characters of response.
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
 				Content: aiPersonAndModel.AiContextPrompt,
 			},
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: req.Message,
-			},
 		},
+	}
+	// Give the latest back and forth message to the completion request.
+	for i := len(recentMessages) - 1; i >= 0; i-- {
+		recent := recentMessages[i]
+		if userPrompt := recent.VoiceTranscription.String; userPrompt != "" {
+			chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleUser,
+				Content: userPrompt,
+			})
+		} else if userPrompt := recent.TextMessage.String; userPrompt != "" {
+			chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleUser,
+				Content: userPrompt,
+			})
+		}
+		if aiReply := recent.ReplyMessage.String; aiReply != "" {
+			chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleAssistant,
+				Content: aiReply,
+			})
+		}
+	}
+	// And here goes the prompt from the user. Feed the completion request to LLM.
+	chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: req.Message,
 	})
+	log.Printf("Chat completion request for AI person %d is: %+v", aiPersonID, chatCompletionRequest)
+	// Feed both context prompt and text prompt to LLM.
+	resp, err := svc.OpenAIClient.CreateChatCompletion(c.Request.Context(), chatCompletionRequest)
 	if err != nil {
+		log.Printf("create chat completion error: %v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -187,33 +223,70 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		FileName:      sampleFileName,
 		Transcription: sql.NullString{String: transcriptionResponse.Text, Valid: true},
 	})
-	log.Printf("prompt: %+v, voice prompt: %+v", prompt, voicePrompt)
 	if err != nil {
+		log.Printf("create user voice prompt error: %v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
+	log.Printf("prompt: %+v, voice prompt: %+v", prompt, voicePrompt)
 	// Read the voice model and context prompt from this AI person.
 	aiPersonAndModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
+		log.Printf("get latest voice model error: %v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 	log.Printf("ai person and model: %+v", aiPersonAndModel)
-	// Feed both context prompt and text prompt to LLM.
-	resp, err := svc.OpenAIClient.CreateChatCompletion(c.Request.Context(), openai.ChatCompletionRequest{
-		Model: "gpt-4",
+	// Read the latest 10 messages back and forth.
+	recentMessages, err := svc.Config.Database.ListConversations(c.Request.Context(), dbgen.ListConversationsParams{
+		AiPersonID: int64(aiPersonID),
+		Limit:      10,
+	})
+	if err != nil {
+		log.Printf("get latest conversations error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	chatCompletionRequest := openai.ChatCompletionRequest{
+		Model:     "gpt-4",
+		MaxTokens: 100, // good for about 500 characters of response.
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
 				Content: aiPersonAndModel.AiContextPrompt,
 			},
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: transcriptionResponse.Text,
-			},
 		},
+	}
+	// Give the latest back and forth message to the completion request.
+	for i := len(recentMessages) - 1; i >= 0; i-- {
+		recent := recentMessages[i]
+		if userPrompt := recent.VoiceTranscription.String; userPrompt != "" {
+			chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleUser,
+				Content: userPrompt,
+			})
+		} else if userPrompt := recent.TextMessage.String; userPrompt != "" {
+			chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleUser,
+				Content: userPrompt,
+			})
+		}
+		if aiReply := recent.ReplyMessage.String; aiReply != "" {
+			chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleAssistant,
+				Content: aiReply,
+			})
+		}
+	}
+	// And here goes the prompt from the user. Feed the completion request to LLM.
+	chatCompletionRequest.Messages = append(chatCompletionRequest.Messages, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: transcriptionResponse.Text,
 	})
+	log.Printf("Chat completion request for AI person %d is: %+v", aiPersonID, chatCompletionRequest)
+	resp, err := svc.OpenAIClient.CreateChatCompletion(c.Request.Context(), chatCompletionRequest)
 	if err != nil {
+		log.Printf("create chat completion error: %v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -282,7 +355,11 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 // handleGetAIPersonConversation is a gin handler that returns the full conversation going back and forth between a user and an AI person.
 func (svc *HttpService) handleGetAIPersonConversation(c *gin.Context) {
 	aiPersonID, _ := strconv.Atoi(c.Params.ByName("ai_person_id"))
-	conversations, err := svc.Config.Database.ListConversations(c.Request.Context(), int64(aiPersonID))
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	conversations, err := svc.Config.Database.ListConversations(c.Request.Context(), dbgen.ListConversationsParams{
+		AiPersonID: int64(aiPersonID),
+		Limit:      int32(limit),
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -293,6 +370,7 @@ func (svc *HttpService) handleGetAIPersonConversation(c *gin.Context) {
 // handleGetVoiceOutputFile returns the waveform file content of the requested file name.
 func (svc *HttpService) handleGetVoiceOutputFile(c *gin.Context) {
 	fileName := path.Base(c.Params.ByName("file_name"))
+	log.Printf("Reading voice output file: %q", fileName)
 	fullPath := path.Join(svc.Config.VoiceOutputDir, fileName)
 	// Read file info for the content length.
 	fileInfo, err := os.Stat(fullPath)

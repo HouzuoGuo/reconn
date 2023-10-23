@@ -15,7 +15,17 @@
 <h4>Conversation history</h4>
 <ng-container *ngIf="listResp | async as resp">
     <ul>
-        <li *ngFor="let row of resp">{{ row | json }}</li>
+        <li *ngFor="let row of resp">
+            {{ row | json }}
+            <button *ngIf="row?.VoiceFilename?.Valid" (click)="getVoiceFile(row?.VoiceFilename?.String)">Listen to
+                user's voice</button>
+            <button *ngIf="row?.ReplyVoiceFilename?.Valid"
+                (click)="getVoiceFile(row?.ReplyVoiceFilename?.String)">Listen to AI's
+                reply</button>
+        </li>
     </ul>
 </ng-container>
-<button #listConversationButton>List conversations</button>
+<button #listConversationButton>List messages (max 200)</button>
+<p *ngIf="outputFileBlobSrc | async as src">
+    Listen here: <audio controls [src]="src"></audio>
+</p>

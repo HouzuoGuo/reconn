@@ -364,7 +364,14 @@ left outer join user_voice_prompts v on v.user_prompt_id = u.id
 left outer join ai_person_replies r on r.user_prompt_id = u.id
 left outer join ai_person_reply_voices rv on rv.ai_person_reply_id = r.id
 where ai_person_id = $1
+order by u.id desc
+limit $2
 `
+
+type ListConversationsParams struct {
+	AiPersonID int64
+	Limit      int32
+}
 
 type ListConversationsRow struct {
 	ID                 int64
@@ -381,8 +388,8 @@ type ListConversationsRow struct {
 	ReplyVoiceFilename sql.NullString
 }
 
-func (q *Queries) ListConversations(ctx context.Context, aiPersonID int64) ([]ListConversationsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listConversations, aiPersonID)
+func (q *Queries) ListConversations(ctx context.Context, arg ListConversationsParams) ([]ListConversationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listConversations, arg.AiPersonID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

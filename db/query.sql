@@ -68,4 +68,6 @@ left outer join user_text_prompts t on t.user_prompt_id = u.id
 left outer join user_voice_prompts v on v.user_prompt_id = u.id
 left outer join ai_person_replies r on r.user_prompt_id = u.id
 left outer join ai_person_reply_voices rv on rv.ai_person_reply_id = r.id
-where ai_person_id = $1;
+where ai_person_id = $1
+order by u.id desc
+limit $2;

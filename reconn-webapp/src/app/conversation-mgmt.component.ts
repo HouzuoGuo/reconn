@@ -22,11 +22,16 @@ export class ConversationManagementComponent implements OnInit {
   @ViewChild('listConversationButton', { static: true }) listConversationButton!: ElementRef;
   listConversationAIPersonID = '';
   listResp: Observable<ListConversationsRow[]> = EMPTY;
+  outputFileBlob = new ReplaySubject<Blob>(1);
+  outputFileBlobSrc: Observable<string>;
 
   constructor(readonly recorderService: AudioRecorderService, readonly chatService: ChatService) {
     recorderService.recorderError.subscribe((error) => {
       this.recordingStatus.next(JSON.stringify(error));
     });
+    this.outputFileBlobSrc = this.outputFileBlob.pipe(
+      map((input: Blob) => this.blobToUrl(input)),
+    );
   }
 
   recordButtonClick() {
@@ -49,7 +54,7 @@ export class ConversationManagementComponent implements OnInit {
     this.listResp = fromEvent(this.listConversationButton.nativeElement, 'click')
       .pipe(
         startWith(undefined),
-        exhaustMap((click) => this.chatService.listConversation(Number(this.aiPersonID))),
+        exhaustMap((click) => this.chatService.listConversation(Number(this.aiPersonID), 200)),
         shareReplay({ bufferSize: 1, refCount: true })
       );
   }
@@ -76,5 +81,23 @@ export class ConversationManagementComponent implements OnInit {
     });
   }
 
-  getVoiceFile() {}
+  getVoiceFile(outputFileName?: string) {
+    if (!outputFileName) {
+      return;
+    }
+    this.chatService.getVoiceOutputFile(outputFileName)
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          alert('Error: ' + JSON.stringify(err));
+          return EMPTY;
+        })
+      )
+      .subscribe(this.outputFileBlob);
+  }
+
+  blobToUrl(input: Blob) {
+    const blob = new Blob([input], { type: "audio/wav" });
+    const blobUrl = URL.createObjectURL(blob);
+    return blobUrl;
+  }
 }
