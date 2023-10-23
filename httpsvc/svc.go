@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/gin-gonic/gin"
 	"github.com/re-connect-ai/reconn/db/dbgen"
 	openai "github.com/sashabaranov/go-openai"
@@ -36,6 +37,9 @@ type Config struct {
 	VoiceTempModelDir string
 	// VoiceOutputDir is the path to the directory of TTS output files.
 	VoiceOutputDir string
+
+	// ContainerClient is the azure blob storage container client.
+	ContainerClient *container.Client
 }
 
 // HttpService implements HTTP handlers for serving static content, relaying to voice service, and more.

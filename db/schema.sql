@@ -82,7 +82,7 @@ create index if not exists user_voice_prompt_id_index on user_voice_prompts (use
 create table if not exists ai_person_replies
 (
     id bigserial primary key,
-    user_prompt_id bigint references ai_persons (id) on delete cascade not null,
+    user_prompt_id bigint references user_prompts (id) on delete cascade not null,
     -- Whether LLM has generated a reply in response to the prompt.
     status text check ( status in ('processing', 'ready') ) not null,
     message text not null,

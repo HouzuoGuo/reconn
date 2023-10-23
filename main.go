@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
@@ -8,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/re-connect-ai/reconn/db"
 	"github.com/re-connect-ai/reconn/httpsvc"
 )
@@ -20,6 +22,8 @@ func main() {
 	var voiceServiceAddr, openaiKey string
 	var dbConf db.Config
 	var voiceSampleDir, voiceModelDir, voiceTempModelDir, voiceOutputDir string
+
+	var azStorageConnString, azStorageContainer string
 
 	flag.BoolVar(&debugMode, "debug", false, "start http server in debug mode")
 	flag.IntVar(&port, "port", 8080, "http server listener port")
@@ -40,14 +44,29 @@ func main() {
 	flag.StringVar(&voiceModelDir, "voicemodeldir", "/tmp/voice_model_dir", "path to the directory of constructed user voice models")
 	flag.StringVar(&voiceTempModelDir, "voicetempmodeldir", "/tmp/voice_temp_model_dir", "path to the directory of temporary user voice models used during TTS")
 	flag.StringVar(&voiceOutputDir, "voiceoutputdir", "/tmp/voice_output_dir", "path to the directory of TTS output files")
+
+	flag.StringVar(&azStorageConnString, "azconnstr", `BlobEndpoint=https://reconn0store.blob.core.windows.net/;QueueEndpoint=https://reconn0store.queue.core.windows.net/;FileEndpoint=https://reconn0store.file.core.windows.net/;TableEndpoint=https://reconn0store.table.core.windows.net/;SharedAccessSignature=sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2040-10-23T15:58:46Z&st=2023-10-23T07:58:46Z&spr=https&sig=eb%2Fj8eNXyY3qfnyDhLX7wMft0sa13ICSf9wxQgWZ7WE%3D`, "azure storage connections tring")
+	flag.StringVar(&azStorageContainer, "azcontainer", "voice", "azure storage container name")
+
 	flag.Parse()
 
 	log.Printf("about to start web service on port %d, connect to backend voice service at %q, debug mode? %v, using http basic auth? %v", port, voiceServiceAddr, debugMode, basicAuthUser != "")
 
+	// Connect to DB.
 	lowLevelDB, reconnDB, err := db.Connect(dbConf)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
+
+	log.Printf("successfully connected to database %v:%v, stats: %+v", dbConf.Host, dbConf.Port, lowLevelDB.Stats())
+
+	// Connect to Azure storage.
+	containerClient, err := container.NewClientFromConnectionString(azStorageConnString, azStorageContainer, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	containerProps, err := containerClient.GetProperties(context.Background(), nil)
+	log.Printf("successfully connected to azure storage (err? %v), %+v", err, containerProps)
 
 	httpService, err := httpsvc.New(httpsvc.Config{
 		DebugMode: debugMode,
@@ -65,6 +84,8 @@ func main() {
 		VoiceModelDir:     voiceModelDir,
 		VoiceTempModelDir: voiceTempModelDir,
 		VoiceOutputDir:    voiceOutputDir,
+
+		ContainerClient: containerClient,
 	})
 	if err != nil {
 		log.Fatalf("failed to initialise http service: %v", err)

@@ -37,6 +37,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		Timestamp:  time.Now(),
 	})
 	if err != nil {
+		log.Printf("create user prompt error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -46,12 +47,14 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 	})
 	log.Printf("prompt: %+v, text prompt: %+v", prompt, textPrompt)
 	if err != nil {
+		log.Printf("create user text prompt error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 	// Read the voice model and context prompt from this AI person.
 	aiPersonAndModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
+		log.Printf("get latest voice model error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
