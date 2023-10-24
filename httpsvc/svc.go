@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
 	"github.com/re-connect-ai/reconn/db/dbgen"
 	openai "github.com/sashabaranov/go-openai"
@@ -38,8 +38,14 @@ type Config struct {
 	// VoiceOutputDir is the path to the directory of TTS output files.
 	VoiceOutputDir string
 
-	// ContainerClient is the azure blob storage container client.
-	ContainerClient *container.Client
+	// BlobClient is the azure blob storage client.
+	BlobClient *azblob.Client
+	// VoiceSampleContainer is the blob container name of the voice samples.
+	VoiceSampleContainer string
+	// VoiceSampleContainer is the blob container name of the voice models.
+	VoiceModelContainer string
+	// VoiceSampleContainer is the blob container name of the voice output files.
+	VoiceOutputContainer string
 }
 
 // HttpService implements HTTP handlers for serving static content, relaying to voice service, and more.
