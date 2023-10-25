@@ -1,7 +1,6 @@
 package httpsvc
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"strconv"
 	"time"
 
@@ -37,9 +35,8 @@ func (svc *HttpService) handleCreateVoiceSample(c *gin.Context) {
 	timestamp := time.Now()
 	sampleFileName := fmt.Sprintf("%d-%s.wav", aiPersonID, timestamp.Format(time.RFC3339))
 	// Save the file to blob storage and then write to database.
-	_, err = svc.Config.BlobClient.UploadBuffer(c.Request.Context(), svc.Config.VoiceSampleContainer, sampleFileName, wavContent, nil)
-	if err != nil {
-		log.Printf("blob upload buffer errror: %+v", err)
+	if _, err := svc.UploadAndSave(c.Request.Context(), svc.Config.VoiceSampleContainer, sampleFileName, svc.Config.VoiceSampleDir, wavContent); err != nil {
+		log.Printf("upload and save error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -90,10 +87,7 @@ func (svc *HttpService) handleCreateVoiceModel(c *gin.Context) {
 		return
 	}
 	// Retrieve the sample wave file from blob storage.
-	localFilePath := path.Join(svc.Config.VoiceSampleDir, voiceSample.FileName.String)
-	localSampleFile, err := os.Create(localFilePath)
-	defer localSampleFile.Close()
-	_, err = svc.Config.BlobClient.DownloadFile(c.Request.Context(), svc.Config.VoiceSampleContainer, voiceSample.FileName.String, localSampleFile, nil)
+	localFilePath, err := svc.DownloadBlobToLocalFileIfNotExist(c.Request.Context(), svc.Config.VoiceSampleContainer, voiceSample.FileName.String, svc.Config.VoiceSampleDir)
 	if err != nil {
 		log.Printf("blob download file error: %v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -135,34 +129,10 @@ func (svc *HttpService) handleCreateVoiceModel(c *gin.Context) {
 		Timestamp:     time.Now(),
 	})
 	// Store the voice model in blob storage.
-	modelFile, err := os.Open(path.Join(svc.Config.VoiceModelDir, cloneResp.ModelDestinationFile))
-	if err != nil {
-		log.Printf("open model file error: %+v", err)
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-	defer modelFile.Close()
-	_, err = svc.Config.BlobClient.UploadFile(c.Request.Context(), svc.Config.VoiceModelContainer, cloneResp.ModelDestinationFile, modelFile, nil)
-	if err != nil {
-		log.Printf("blob upload buffer errror: %+v", err)
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-	if err != nil {
+	if err := svc.UploadFromLocalFile(c.Request.Context(), svc.Config.VoiceModelContainer, cloneResp.ModelDestinationFile, svc.Config.VoiceModelDir); err != nil {
+		log.Printf("upload from local file error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(http.StatusOK, voiceModel)
-}
-
-func (svc *HttpService) DownloadModelIfNotExist(ctx context.Context, modelFileName string) error {
-	localFilePath := path.Join(svc.Config.VoiceModelDir, modelFileName)
-	if stat, err := os.Stat(localFilePath); err == nil && stat.Size() > 0 {
-		// Already downloaded to disk.
-		return nil
-	}
-	modelFile, err := os.Create(localFilePath)
-	defer modelFile.Close()
-	_, err = svc.Config.BlobClient.DownloadFile(ctx, svc.Config.VoiceModelContainer, modelFileName, modelFile, nil)
-	return err
 }

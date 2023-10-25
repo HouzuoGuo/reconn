@@ -145,7 +145,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		return
 	}
 	// Download the model file to local disk and then relay to python voice server.
-	if err := svc.DownloadModelIfNotExist(c.Request.Context(), aiPersonAndModel.FileName.String); err != nil {
+	if _, err := svc.DownloadModelIfNotExist(c.Request.Context(), aiPersonAndModel.FileName.String); err != nil {
 		log.Printf("download model error: %v", err)
 		c.JSON(http.StatusInternalServerError, err)
 		return
