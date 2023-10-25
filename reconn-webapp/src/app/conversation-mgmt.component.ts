@@ -92,7 +92,9 @@ export class ConversationManagementComponent implements OnInit {
           return EMPTY;
         })
       )
-      .subscribe(this.outputFileBlob);
+      .subscribe((val) => {
+        this.outputFileBlob.next(val);
+      });
   }
 
   blobToUrl(input: Blob) {

@@ -47,6 +47,7 @@ func (svc *HttpService) handleCreateVoiceSample(c *gin.Context) {
 		Timestamp:  timestamp,
 	})
 	if err != nil {
+		log.Printf("create voice sample error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -58,6 +59,7 @@ func (svc *HttpService) handleListVoiceSamples(c *gin.Context) {
 	aiPersonID, _ := strconv.Atoi(c.Params.ByName("ai_person_id"))
 	voiceSamples, err := svc.Config.Database.ListVoiceSamples(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
+		log.Printf("list voice sample error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -69,6 +71,7 @@ func (svc *HttpService) handleGetLatestVoiceModel(c *gin.Context) {
 	aiPersonID, _ := strconv.Atoi(c.Params.ByName("ai_person_id"))
 	latestModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
+		log.Printf("get latest voice model error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -83,6 +86,7 @@ func (svc *HttpService) handleCreateVoiceModel(c *gin.Context) {
 	// Retrieve the sample record from database.
 	voiceSample, err := svc.Config.Database.GetVoiceSampleByID(c.Request.Context(), int64(voiceSampleID))
 	if err != nil {
+		log.Printf("get voice sample by id error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
