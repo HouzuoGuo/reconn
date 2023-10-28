@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
 	"github.com/re-connect-ai/reconn/db/dbgen"
@@ -46,12 +47,19 @@ type Config struct {
 	VoiceModelContainer string
 	// VoiceSampleContainer is the blob container name of the voice output files.
 	VoiceOutputContainer string
+
+	// ServiceBusQueue is the name of azure service bus queue.
+	ServiceBusQueue string
+	// ServiceBusClient is the azure service bus client.
+	ServiceBusClient *azservicebus.Client
+	// ServiceBusClient is the azure service bus sender client.
+	ServiceBusSender *azservicebus.Sender
 }
 
 // HttpService implements HTTP handlers for serving static content, relaying to voice service, and more.
 type HttpService struct {
 	// Config has the configuration of the web server and its external dependencies.
-	Config Config
+	Config *Config
 	// VoiceClient is an HTTP client for the voice service (reconn/voicesvc).
 	VoiceClient *http.Client
 	// OpenAIClient is a ChatGPT client.
@@ -59,7 +67,7 @@ type HttpService struct {
 }
 
 // New returns an initialised HTTP service.
-func New(conf Config) (*HttpService, error) {
+func New(conf *Config) (*HttpService, error) {
 	svc := &HttpService{
 		Config:       conf,
 		OpenAIClient: openai.NewClient(conf.OpenAIKey),
@@ -124,6 +132,10 @@ func (svc *HttpService) SetupRouter() *gin.Engine {
 		router.POST("/api/debug/ai_person/:ai_person_id/post_voice_message", svc.handlePostVoiceMessage)
 		router.GET("/api/debug/ai_person/:ai_person_id/conversation", svc.handleGetAIPersonConversation)
 		router.GET("/api/debug/voice_output_file/:file_name", svc.handleGetVoiceOutputFile)
+		// Use GPU-enabled workers for asynchronous processing.
+		router.POST("/api/debug/voice_sample/:voice_sample_id/create_model_async", svc.handleCreateVoiceModelAsync)
+		router.POST("/api/debug/ai_person/:ai_person_id/post_text_message_async", svc.handlePostTextMessageAsync)
+		router.POST("/api/debug/ai_person/:ai_person_id/post_voice_message_async", svc.handlePostVoiceMessageAsync)
 	}
 	return router
 }
