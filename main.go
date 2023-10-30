@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"net"
@@ -9,8 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/re-connect-ai/reconn/db"
 	"github.com/re-connect-ai/reconn/httpsvc"
 	"github.com/re-connect-ai/reconn/workersvc"
@@ -60,78 +57,49 @@ func main() {
 
 	flag.Parse()
 
-	// Connect to DB.
-	lowLevelDB, reconnDB, err := db.Connect(dbConf)
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-		return
-	}
-	log.Printf("successfully connected to database %v:%v, stats: %+v", dbConf.Host, dbConf.Port, lowLevelDB.Stats())
-
-	// Connect to Azure blob storage.
-	blobClient, err := azblob.NewClientFromConnectionString(azBlobConnString, nil)
-	if err != nil {
-		log.Fatalf("failed to connect to azure blob storage: %v", err)
-		return
-	}
-	blobProps, err := blobClient.ServiceClient().GetProperties(context.Background(), nil)
-	if err != nil {
-		log.Fatalf("failed to connect to azure blob storage: %v", err)
-		return
-	}
-	log.Printf("successfully connected to azure storage (err? %v), %+#v", err, blobProps)
-
-	// Connect to azure service bus.
-	svcBusClient, err := azservicebus.NewClientFromConnectionString(azServiceBusConnString, nil)
-	if err != nil {
-		log.Fatalf("failed to connect to azure service bus: %v", err)
-		return
-	}
 	if gpuWorkerMode {
 		log.Printf("about to start GPU worker for service bus queue %q", azServiceBusQueue)
-		svcBusReceiver, err := svcBusClient.NewReceiverForQueue(azServiceBusQueue, nil)
-		if err != nil {
-			log.Fatalf("failed to connect to azure service bus: %v", err)
-			return
-		}
 		workerConf := &workersvc.Config{
-			ServiceBusQueue:    azServiceBusQueue,
-			ServiceBusClient:   svcBusClient,
-			ServiceBusReceiver: svcBusReceiver,
+			VoiceServiceAddr: voiceServiceAddr,
+
+			Database: dbConf,
+
+			BlobConnectionString: azBlobConnString,
+			ServiceBusQueue:      azServiceBusQueue,
+			ServiceBusConnection: azServiceBusConnString,
+
+			VoiceSampleDir:       voiceSampleDir,
+			VoiceModelDir:        voiceModelDir,
+			VoiceTempModelDir:    voiceTempModelDir,
+			VoiceOutputDir:       voiceOutputDir,
+			VoiceSampleContainer: azVoiceSampleContainer,
+			VoiceModelContainer:  azVoiceModelContainer,
+			VoiceOutputContainer: azVoiceOutputContainer,
 		}
 		startGPUWorker(workerConf)
 	} else {
 		log.Printf("about to start web service on port %d, connect to backend voice service at %q, debug mode? %v, using http basic auth? %v", port, voiceServiceAddr, httpDebugMode, basicAuthUser != "")
-		svcBusSender, err := svcBusClient.NewSender(azServiceBusQueue, nil)
-		if err != nil {
-			log.Fatalf("failed to connect to azure service bus: %v", err)
-			return
-		}
 		httpConf := &httpsvc.Config{
-			DebugMode: httpDebugMode,
-
+			DebugMode:        httpDebugMode,
 			VoiceServiceAddr: voiceServiceAddr,
 			OpenAIKey:        openaiKey,
 
 			BasicAuthUser:     basicAuthUser,
 			BasicAuthPassword: basicAuthPassword,
 
-			LowLevelDB: lowLevelDB,
-			Database:   reconnDB,
+			Database: dbConf,
 
-			VoiceSampleDir:    voiceSampleDir,
-			VoiceModelDir:     voiceModelDir,
-			VoiceTempModelDir: voiceTempModelDir,
-			VoiceOutputDir:    voiceOutputDir,
-
-			BlobClient:           blobClient,
+			VoiceSampleDir:       voiceSampleDir,
+			VoiceModelDir:        voiceModelDir,
+			VoiceTempModelDir:    voiceTempModelDir,
+			VoiceOutputDir:       voiceOutputDir,
 			VoiceSampleContainer: azVoiceSampleContainer,
 			VoiceModelContainer:  azVoiceModelContainer,
 			VoiceOutputContainer: azVoiceOutputContainer,
 
-			ServiceBusQueue:  azServiceBusQueue,
-			ServiceBusClient: svcBusClient,
-			ServiceBusSender: svcBusSender,
+			BlobConnectionString: azBlobConnString,
+			ServiceBusQueue:      azServiceBusQueue,
+			ServiceBusConnection: azServiceBusConnString,
 		}
 		startHTTPServer(httpConf, addr, port)
 	}
@@ -157,4 +125,9 @@ func startHTTPServer(conf *httpsvc.Config, addr string, port int) {
 }
 
 func startGPUWorker(conf *workersvc.Config) {
+	worker, err := workersvc.New(conf)
+	if err != nil {
+		log.Fatalf("failed to initialise GPU worker service: %v", err)
+	}
+	log.Fatalf("GPU worker exited: %v", worker.Run())
 }

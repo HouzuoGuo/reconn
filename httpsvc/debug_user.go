@@ -14,7 +14,7 @@ func (svc *HttpService) handleCreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	user, err := svc.Config.Database.CreateUser(c.Request.Context(), req)
+	user, err := svc.Database.CreateUser(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -24,7 +24,7 @@ func (svc *HttpService) handleCreateUser(c *gin.Context) {
 
 // handleListUsers is a gin handler that lists all users.
 func (svc *HttpService) handleListUsers(c *gin.Context) {
-	users, err := svc.Config.Database.ListUsers(c.Request.Context())
+	users, err := svc.Database.ListUsers(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return

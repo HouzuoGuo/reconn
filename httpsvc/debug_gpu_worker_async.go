@@ -3,24 +3,29 @@ package httpsvc
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/gin-gonic/gin"
 	"github.com/re-connect-ai/reconn/db/dbgen"
+	"github.com/re-connect-ai/reconn/shared"
 	openai "github.com/sashabaranov/go-openai"
 )
+
+var applicationJSON *string = &([]string{"application/json"})[0]
 
 // handleCreateVoiceModelAsync is a gin handler that posts a message to the GPU worker queue to create a voice model.
 func (svc *HttpService) handleCreateVoiceModelAsync(c *gin.Context) {
 	voiceSampleID, _ := strconv.Atoi(c.Params.ByName("voice_sample_id"))
 	// Retrieve the sample record from database.
-	voiceSample, err := svc.Config.Database.GetVoiceSampleByID(c.Request.Context(), int64(voiceSampleID))
+	voiceSample, err := svc.Database.GetVoiceSampleByID(c.Request.Context(), int64(voiceSampleID))
 	if err != nil {
 		log.Printf("get voice sample by id error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -41,13 +46,35 @@ func (svc *HttpService) handleCreateVoiceModelAsync(c *gin.Context) {
 		return
 	}
 	// Back to this handler, create the cloned voice model record in database.
-	voiceModel, err := svc.Config.Database.CreateVoiceModel(c.Request.Context(), dbgen.CreateVoiceModelParams{
+	voiceModel, err := svc.Database.CreateVoiceModel(c.Request.Context(), dbgen.CreateVoiceModelParams{
 		VoiceSampleID: int64(voiceSampleID),
 		Status:        "processing",
-		FileName:      sql.NullString{String: "TODO FIXME.TODO FIXME", Valid: true},
+		FileName:      sql.NullString{String: "waiting to be processed by GPU worker", Valid: true},
 		Timestamp:     time.Now(),
 	})
-	// TODO FIXME post to queue
+	if err != nil {
+		log.Printf("create voice model error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	// Post to the GPU task queue.
+	taskBody, err := json.Marshal(shared.GPUTask{
+		VoiceModelID: int(voiceModel.ID),
+	})
+	if err != nil {
+		log.Printf("marshal gputask error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	err = svc.ServiceBusSender.SendMessage(c.Request.Context(), &azservicebus.Message{
+		Body:        taskBody,
+		ContentType: applicationJSON,
+	}, nil)
+	if err != nil {
+		log.Printf("service bus send message error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
 	c.JSON(http.StatusOK, voiceModel)
 }
 
@@ -60,7 +87,7 @@ func (svc *HttpService) handlePostTextMessageAsync(c *gin.Context) {
 		return
 	}
 	// Create the text prompt in database.
-	prompt, err := svc.Config.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
+	prompt, err := svc.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
 		AiPersonID: int64(aiPersonID),
 		Timestamp:  time.Now(),
 	})
@@ -69,7 +96,7 @@ func (svc *HttpService) handlePostTextMessageAsync(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	textPrompt, err := svc.Config.Database.CreateUserTextPrompt(c.Request.Context(), dbgen.CreateUserTextPromptParams{
+	textPrompt, err := svc.Database.CreateUserTextPrompt(c.Request.Context(), dbgen.CreateUserTextPromptParams{
 		UserPromptID: prompt.ID,
 		Message:      req.Message,
 	})
@@ -80,7 +107,7 @@ func (svc *HttpService) handlePostTextMessageAsync(c *gin.Context) {
 		return
 	}
 	// Read the voice model and context prompt from this AI person.
-	aiPersonAndModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
+	aiPersonAndModel, err := svc.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
 		log.Printf("get latest voice model error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -108,7 +135,7 @@ func (svc *HttpService) handlePostTextMessageAsync(c *gin.Context) {
 	}
 	// Create the AI person reply in database.
 	timestamp := time.Now()
-	aiReply, err := svc.Config.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
+	aiReply, err := svc.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
 		UserPromptID: prompt.ID,
 		Status:       "ready",
 		Message:      llmReply,
@@ -119,13 +146,35 @@ func (svc *HttpService) handlePostTextMessageAsync(c *gin.Context) {
 		return
 	}
 	log.Printf("ai reply: %+v", aiReply)
-	// TODO FIXME post to queue
 	// Create the AI reply record in database.
-	aiReplyVoice, err := svc.Config.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
+	aiReplyVoice, err := svc.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
 		AiPersonReplyID: aiReply.ID,
 		Status:          "processing",
-		FileName:        sql.NullString{String: "TODO FIXME.TODO FIXME", Valid: true},
+		FileName:        sql.NullString{String: "waiting to be processed by GPU worker", Valid: true},
 	})
+	if err != nil {
+		log.Printf("create ai person reply voice error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	// Post to the GPU task queue.
+	taskBody, err := json.Marshal(shared.GPUTask{
+		AIReplyVoiceID: int(aiReplyVoice.ID),
+	})
+	if err != nil {
+		log.Printf("marshal gputask error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	err = svc.ServiceBusSender.SendMessage(c.Request.Context(), &azservicebus.Message{
+		Body:        taskBody,
+		ContentType: applicationJSON,
+	}, nil)
+	if err != nil {
+		log.Printf("service bus send message error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
 	c.JSON(http.StatusOK, aiReplyVoice)
 }
 
@@ -136,7 +185,7 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "request content type must be wave"})
 		return
 	}
-	voiceWaveform, err := ioutil.ReadAll(c.Request.Body)
+	voiceWaveform, err := io.ReadAll(c.Request.Body)
 	if err != nil || len(voiceWaveform) < 100 {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to read request body"})
 		return
@@ -163,7 +212,7 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		return
 	}
 	// Create the user voice prompt in database.
-	prompt, err := svc.Config.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
+	prompt, err := svc.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
 		AiPersonID: int64(aiPersonID),
 		Timestamp:  time.Now(),
 	})
@@ -171,7 +220,7 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	voicePrompt, err := svc.Config.Database.CreateUserVoicePrompt(c.Request.Context(), dbgen.CreateUserVoicePromptParams{
+	voicePrompt, err := svc.Database.CreateUserVoicePrompt(c.Request.Context(), dbgen.CreateUserVoicePromptParams{
 		UserPromptID:  prompt.ID,
 		Status:        "ready",
 		FileName:      sampleFileName,
@@ -184,7 +233,7 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 	}
 	log.Printf("prompt: %+v, voice prompt: %+v", prompt, voicePrompt)
 	// Read the voice model and context prompt from this AI person.
-	aiPersonAndModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
+	aiPersonAndModel, err := svc.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
 		log.Printf("get latest voice model error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -210,7 +259,7 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		llmReply += choice.Message.Content + " "
 	}
 	// Create the AI person reply in database.
-	aiReply, err := svc.Config.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
+	aiReply, err := svc.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
 		UserPromptID: prompt.ID,
 		Status:       "ready",
 		Message:      llmReply,
@@ -221,12 +270,29 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		return
 	}
 	log.Printf("ai reply: %+v", aiReply)
-	// TODO FIXME post to queue
 	// Create the AI reply record in database.
-	aiReplyVoice, err := svc.Config.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
+	aiReplyVoice, err := svc.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
 		AiPersonReplyID: aiReply.ID,
 		Status:          "processing",
-		FileName:        sql.NullString{String: "TODO FIXME.TODO FIXME", Valid: true},
+		FileName:        sql.NullString{String: "waiting to be processed by GPU worker", Valid: true},
 	})
+	// Post to the GPU task queue.
+	taskBody, err := json.Marshal(shared.GPUTask{
+		AIReplyVoiceID: int(aiReplyVoice.ID),
+	})
+	if err != nil {
+		log.Printf("marshal gputask error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	err = svc.ServiceBusSender.SendMessage(c.Request.Context(), &azservicebus.Message{
+		Body:        taskBody,
+		ContentType: applicationJSON,
+	}, nil)
+	if err != nil {
+		log.Printf("service bus send message error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
 	c.JSON(http.StatusOK, aiReplyVoice)
 }

@@ -287,6 +287,23 @@ func (q *Queries) GetUserByName(ctx context.Context, name string) (User, error) 
 	return i, err
 }
 
+const getVoiceModelByID = `-- name: GetVoiceModelByID :one
+select id, voice_sample_id, status, file_name, timestamp from voice_models where id = $1
+`
+
+func (q *Queries) GetVoiceModelByID(ctx context.Context, id int64) (VoiceModel, error) {
+	row := q.db.QueryRowContext(ctx, getVoiceModelByID, id)
+	var i VoiceModel
+	err := row.Scan(
+		&i.ID,
+		&i.VoiceSampleID,
+		&i.Status,
+		&i.FileName,
+		&i.Timestamp,
+	)
+	return i, err
+}
+
 const getVoiceModelByVoiceSample = `-- name: GetVoiceModelByVoiceSample :one
 select id, voice_sample_id, status, file_name, timestamp from voice_models where voice_sample_id = $1
 `
@@ -519,16 +536,17 @@ func (q *Queries) UpdateAIPersonReplyByID(ctx context.Context, arg UpdateAIPerso
 }
 
 const updateAIPersonReplyVoiceStatusByID = `-- name: UpdateAIPersonReplyVoiceStatusByID :exec
-update ai_person_reply_voices set status = $1 where id = $2
+update ai_person_reply_voices set status = $1 and file_name = $2 where id = $3
 `
 
 type UpdateAIPersonReplyVoiceStatusByIDParams struct {
-	Status string
-	ID     int64
+	Status   string
+	FileName sql.NullString
+	ID       int64
 }
 
 func (q *Queries) UpdateAIPersonReplyVoiceStatusByID(ctx context.Context, arg UpdateAIPersonReplyVoiceStatusByIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateAIPersonReplyVoiceStatusByID, arg.Status, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateAIPersonReplyVoiceStatusByID, arg.Status, arg.FileName, arg.ID)
 	return err
 }
 
@@ -547,15 +565,16 @@ func (q *Queries) UpdateUserVoicePromptStatusByID(ctx context.Context, arg Updat
 }
 
 const updateVoiceModelByID = `-- name: UpdateVoiceModelByID :exec
-update voice_models set status = $1 where id = $2
+update voice_models set status = $1 and file_name = $2 where id = $3
 `
 
 type UpdateVoiceModelByIDParams struct {
-	Status string
-	ID     int64
+	Status   string
+	FileName sql.NullString
+	ID       int64
 }
 
 func (q *Queries) UpdateVoiceModelByID(ctx context.Context, arg UpdateVoiceModelByIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateVoiceModelByID, arg.Status, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateVoiceModelByID, arg.Status, arg.FileName, arg.ID)
 	return err
 }

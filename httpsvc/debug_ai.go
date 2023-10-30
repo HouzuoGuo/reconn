@@ -4,33 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/re-connect-ai/reconn/shared"
 	openai "github.com/sashabaranov/go-openai"
 )
-
-// CloneRealTimeResponse is the structure of /clone-rt/ response.
-type CloneRealTimeResponse struct {
-	// ModelDestinationFile is the relative path of the newly cloned voice model.
-	ModelDestinationFile string `json:"model"`
-}
-
-// TextToSpeechRealTimeRequest is the structure of /tts-rt/ request.
-type TextToSpeechRealTimeRequest struct {
-	Text         string  `json:"text"`
-	TopK         float64 `json:"topK"`
-	TopP         float64 `json:"topP"`
-	MineosP      float64 `json:"mineosP"`
-	SemanticTemp float64 `json:"semanticTemp"`
-	WaveformTemp float64 `json:"waveformTemp"`
-	FineTemp     float64 `json:"fineTemp"`
-}
 
 // handleReadback is a gin handler that reads back several parameters from the request.
 // This is only used for experimenting, do not expose to the Internet.
@@ -55,7 +40,7 @@ func (svc *HttpService) handleRelayCloneRealTime(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "user_id must be present"})
 		return
 	}
-	wavContent, err := ioutil.ReadAll(c.Request.Body)
+	wavContent, err := io.ReadAll(c.Request.Body)
 	if err != nil || len(wavContent) < 100 {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to read request body"})
 		return
@@ -75,7 +60,7 @@ func (svc *HttpService) handleRelayCloneRealTime(c *gin.Context) {
 		return
 	}
 	log.Printf("clone-rt responded with status %d and content length %d", resp.StatusCode, resp.ContentLength)
-	var cloneResp CloneRealTimeResponse
+	var cloneResp shared.CloneRealTimeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cloneResp); err != nil {
 		log.Printf("failed to deserialise clone-rt response: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to make voice service request"})
@@ -92,7 +77,7 @@ func (svc *HttpService) handleRelayTextToSpeechRealTime(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "user_id must be present"})
 		return
 	}
-	var ttsRequest TextToSpeechRealTimeRequest
+	var ttsRequest shared.TextToSpeechRealTimeRequest
 	if err := c.BindJSON(&ttsRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to deserialise request"})
 		return
@@ -122,7 +107,7 @@ func (svc *HttpService) handleRelayTextToSpeechRealTime(c *gin.Context) {
 		return
 	}
 	log.Printf("tts-rt responded with status %d and content length %d", resp.StatusCode, resp.ContentLength)
-	wavContent, err := ioutil.ReadAll(resp.Body)
+	wavContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("failed to make tts-rt request: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to make voice service request"})
@@ -146,7 +131,7 @@ type VoiceModel struct {
 // handleListVoiceModel is a gin handler that responds with the current list of cloned voice models.
 // It should only be used by the experimental web app.
 func (svc *HttpService) handleListVoiceModel(c *gin.Context) {
-	entries, err := ioutil.ReadDir(svc.Config.VoiceModelDir)
+	entries, err := os.ReadDir(svc.Config.VoiceModelDir)
 	if err != nil {
 		log.Printf("failed to read voice model directory: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to read voice model directory"})
@@ -160,9 +145,8 @@ func (svc *HttpService) handleListVoiceModel(c *gin.Context) {
 		}
 		userID := strings.TrimSuffix(fileName, filepath.Ext(fileName))
 		resp.Models[userID] = VoiceModel{
-			FileName:     fileName,
-			UserID:       userID,
-			LastModified: entry.ModTime(),
+			FileName: fileName,
+			UserID:   userID,
 		}
 	}
 	c.JSON(http.StatusOK, resp)
@@ -235,7 +219,7 @@ func (svc *HttpService) handleTranscribeRealTime(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "request content type must be wave"})
 		return
 	}
-	wavContent, err := ioutil.ReadAll(c.Request.Body)
+	wavContent, err := io.ReadAll(c.Request.Body)
 	if err != nil || len(wavContent) < 100 {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to read request body"})
 		return

@@ -5,22 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path"
+
+	"github.com/re-connect-ai/reconn/shared"
 )
 
 func (svc *HttpService) DownloadBlobToLocalFileIfNotExist(ctx context.Context, blobContainerName, fileName, localDir string) (string, error) {
-	localFilePath := path.Join(localDir, fileName)
-	if localDirStat, err := os.Stat(localDir); err != nil || !localDirStat.IsDir() {
-		err = fmt.Errorf("cannot access local fs directory %q: %w", localDir, err)
-		return "", err
-	}
-	if stat, err := os.Stat(localFilePath); err == nil && stat.Size() > 0 {
-		// Already downloaded to disk.
-		return localFilePath, nil
-	}
-	localFile, err := os.Create(localFilePath)
-	defer localFile.Close()
-	_, err = svc.Config.BlobClient.DownloadFile(ctx, blobContainerName, fileName, localFile, nil)
-	return localFilePath, err
+	return shared.DownloadBlobToLocalFileIfNotExist(ctx, svc.BlobClient, blobContainerName, fileName, localDir)
 }
 
 func (svc *HttpService) DownloadModelIfNotExist(ctx context.Context, fileName string) (string, error) {
@@ -37,7 +27,7 @@ func (svc *HttpService) UploadFromLocalFile(ctx context.Context, blobContainerNa
 		return err
 	}
 	defer localFile.Close()
-	_, err = svc.Config.BlobClient.UploadFile(ctx, blobContainerName, fileName, localFile, nil)
+	_, err = svc.BlobClient.UploadFile(ctx, blobContainerName, fileName, localFile, nil)
 	if err != nil {
 		return err
 	}
@@ -53,7 +43,7 @@ func (svc *HttpService) UploadAndSave(ctx context.Context, blobContainerName, fi
 	if err := os.WriteFile(localFilePath, data, 0644); err != nil {
 		return "", err
 	}
-	if _, err := svc.Config.BlobClient.UploadBuffer(ctx, blobContainerName, fileName, data, nil); err != nil {
+	if _, err := svc.BlobClient.UploadBuffer(ctx, blobContainerName, fileName, data, nil); err != nil {
 		return "", err
 	}
 	return localFilePath, nil

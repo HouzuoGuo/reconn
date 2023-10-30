@@ -15,7 +15,7 @@ func (svc *HttpService) handleCreateAIPerson(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	aiPerson, err := svc.Config.Database.CreateAIPerson(c.Request.Context(), req)
+	aiPerson, err := svc.Database.CreateAIPerson(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -26,7 +26,7 @@ func (svc *HttpService) handleCreateAIPerson(c *gin.Context) {
 // handleListUsers is a gin handler that lists all AI personality for a user.
 func (svc *HttpService) handleListAIPersons(c *gin.Context) {
 	userID, _ := strconv.Atoi(c.Params.ByName("user_id"))
-	aiPersons, err := svc.Config.Database.ListAIPersons(c.Request.Context(), int64(userID))
+	aiPersons, err := svc.Database.ListAIPersons(c.Request.Context(), int64(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -43,7 +43,7 @@ func (svc *HttpService) handleUpdateAIPerson(c *gin.Context) {
 		return
 	}
 	req.ID = int64(aiPersonID)
-	err := svc.Config.Database.UpdateAIPersonContextPromptByID(c.Request.Context(), req)
+	err := svc.Database.UpdateAIPersonContextPromptByID(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return

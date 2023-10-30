@@ -11,7 +11,7 @@ import (
 
 func setupRouter(t *testing.T) (svc *HttpService, router *gin.Engine) {
 	t.Helper()
-	svc = &HttpService{Config: Config{}}
+	svc = &HttpService{Config: &Config{}}
 	return svc, svc.SetupRouter()
 }
 

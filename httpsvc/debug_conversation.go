@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -17,12 +17,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/re-connect-ai/reconn/db/dbgen"
+	"github.com/re-connect-ai/reconn/shared"
 	openai "github.com/sashabaranov/go-openai"
 )
 
 func (svc *HttpService) chatCompletionRequest(ctx context.Context, aiPersonID int, contextPrompt, newUserPrompt string) (ret openai.ChatCompletionRequest, err error) {
 	// Read the latest 10 messages back and forth.
-	recentMessages, err := svc.Config.Database.ListConversations(ctx, dbgen.ListConversationsParams{
+	recentMessages, err := svc.Database.ListConversations(ctx, dbgen.ListConversationsParams{
 		AiPersonID: int64(aiPersonID),
 		Limit:      10,
 	})
@@ -84,7 +85,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		return
 	}
 	// Create the text prompt in database.
-	prompt, err := svc.Config.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
+	prompt, err := svc.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
 		AiPersonID: int64(aiPersonID),
 		Timestamp:  time.Now(),
 	})
@@ -93,7 +94,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	textPrompt, err := svc.Config.Database.CreateUserTextPrompt(c.Request.Context(), dbgen.CreateUserTextPromptParams{
+	textPrompt, err := svc.Database.CreateUserTextPrompt(c.Request.Context(), dbgen.CreateUserTextPromptParams{
 		UserPromptID: prompt.ID,
 		Message:      req.Message,
 	})
@@ -104,7 +105,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		return
 	}
 	// Read the voice model and context prompt from this AI person.
-	aiPersonAndModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
+	aiPersonAndModel, err := svc.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
 		log.Printf("get latest voice model error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -132,7 +133,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 	}
 	// Create the AI person reply in database.
 	timestamp := time.Now()
-	aiReply, err := svc.Config.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
+	aiReply, err := svc.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
 		UserPromptID: prompt.ID,
 		Status:       "ready",
 		Message:      llmReply,
@@ -144,7 +145,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 	}
 	log.Printf("ai reply: %+v", aiReply)
 	// Convert the reply into voice in real time.
-	ttsRequestBody, err := json.Marshal(TextToSpeechRealTimeRequest{
+	ttsRequestBody, err := json.Marshal(shared.TextToSpeechRealTimeRequest{
 		Text:         llmReply,
 		TopK:         99,
 		TopP:         0.8,
@@ -177,7 +178,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		return
 	}
 	log.Printf("tts-rt responded with status %d and content length %d", ttsResponse.StatusCode, ttsResponse.ContentLength)
-	ttsWaveContent, err := ioutil.ReadAll(ttsResponse.Body)
+	ttsWaveContent, err := io.ReadAll(ttsResponse.Body)
 	if err != nil {
 		log.Printf("failed to read tts response body: %v", err)
 		c.JSON(http.StatusInternalServerError, err)
@@ -191,7 +192,7 @@ func (svc *HttpService) handlePostTextMessage(c *gin.Context) {
 		return
 	}
 	// Create the AI reply record in database.
-	aiReplyVoice, err := svc.Config.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
+	aiReplyVoice, err := svc.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
 		AiPersonReplyID: aiReply.ID,
 		Status:          "ready",
 		FileName:        sql.NullString{String: fileName, Valid: true},
@@ -206,7 +207,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "request content type must be wave"})
 		return
 	}
-	voiceWaveform, err := ioutil.ReadAll(c.Request.Body)
+	voiceWaveform, err := io.ReadAll(c.Request.Body)
 	if err != nil || len(voiceWaveform) < 100 {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "failed to read request body"})
 		return
@@ -233,7 +234,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		return
 	}
 	// Create the user voice prompt in database.
-	prompt, err := svc.Config.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
+	prompt, err := svc.Database.CreateUserPrompt(c.Request.Context(), dbgen.CreateUserPromptParams{
 		AiPersonID: int64(aiPersonID),
 		Timestamp:  time.Now(),
 	})
@@ -241,7 +242,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	voicePrompt, err := svc.Config.Database.CreateUserVoicePrompt(c.Request.Context(), dbgen.CreateUserVoicePromptParams{
+	voicePrompt, err := svc.Database.CreateUserVoicePrompt(c.Request.Context(), dbgen.CreateUserVoicePromptParams{
 		UserPromptID:  prompt.ID,
 		Status:        "ready",
 		FileName:      sampleFileName,
@@ -254,7 +255,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 	}
 	log.Printf("prompt: %+v, voice prompt: %+v", prompt, voicePrompt)
 	// Read the voice model and context prompt from this AI person.
-	aiPersonAndModel, err := svc.Config.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
+	aiPersonAndModel, err := svc.Database.GetLatestVoiceModel(c.Request.Context(), int64(aiPersonID))
 	if err != nil {
 		log.Printf("get latest voice model error: %+v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -280,7 +281,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		llmReply += choice.Message.Content + " "
 	}
 	// Create the AI person reply in database.
-	aiReply, err := svc.Config.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
+	aiReply, err := svc.Database.CreateAIPersonReply(c.Request.Context(), dbgen.CreateAIPersonReplyParams{
 		UserPromptID: prompt.ID,
 		Status:       "ready",
 		Message:      llmReply,
@@ -292,7 +293,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 	}
 	log.Printf("ai reply: %+v", aiReply)
 	// Convert the reply into voice in real time.
-	ttsRequestBody, err := json.Marshal(TextToSpeechRealTimeRequest{
+	ttsRequestBody, err := json.Marshal(shared.TextToSpeechRealTimeRequest{
 		Text:         llmReply,
 		TopK:         99,
 		TopP:         0.8,
@@ -317,7 +318,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		return
 	}
 	log.Printf("tts-rt responded with status %d and content length %d", ttsResponse.StatusCode, ttsResponse.ContentLength)
-	ttsWaveContent, err := ioutil.ReadAll(ttsResponse.Body)
+	ttsWaveContent, err := io.ReadAll(ttsResponse.Body)
 	if err != nil {
 		log.Printf("failed to read tts response body: %v", err)
 		c.JSON(http.StatusInternalServerError, err)
@@ -331,7 +332,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 		return
 	}
 	// Create the AI reply record in database.
-	aiReplyVoice, err := svc.Config.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
+	aiReplyVoice, err := svc.Database.CreateAIPersonReplyVoice(c.Request.Context(), dbgen.CreateAIPersonReplyVoiceParams{
 		AiPersonReplyID: aiReply.ID,
 		Status:          "ready",
 		FileName:        sql.NullString{String: fileName, Valid: true},
@@ -343,7 +344,7 @@ func (svc *HttpService) handlePostVoiceMessage(c *gin.Context) {
 func (svc *HttpService) handleGetAIPersonConversation(c *gin.Context) {
 	aiPersonID, _ := strconv.Atoi(c.Params.ByName("ai_person_id"))
 	limit, _ := strconv.Atoi(c.Query("limit"))
-	conversations, err := svc.Config.Database.ListConversations(c.Request.Context(), dbgen.ListConversationsParams{
+	conversations, err := svc.Database.ListConversations(c.Request.Context(), dbgen.ListConversationsParams{
 		AiPersonID: int64(aiPersonID),
 		Limit:      int32(limit),
 	})

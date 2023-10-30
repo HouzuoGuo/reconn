@@ -1,14 +1,17 @@
 package httpsvc
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
+	"github.com/re-connect-ai/reconn/db"
 	"github.com/re-connect-ai/reconn/db/dbgen"
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -25,10 +28,9 @@ type Config struct {
 	VoiceServiceAddr string
 	// OpenAIKey is the API key of OpenAI / ChatGPT.
 	OpenAIKey string
-	// LowLevelDB is an initialised low-level sql.DB database client.
-	LowLevelDB *sql.DB
-	// Database is the high level & strongly typed reconn DB client.
-	Database *dbgen.Queries
+
+	// Database configuration.
+	Database db.Config
 
 	// VoiceSampleDir is the path to the directory of incoming user voice samples.
 	VoiceSampleDir string
@@ -39,8 +41,6 @@ type Config struct {
 	// VoiceOutputDir is the path to the directory of TTS output files.
 	VoiceOutputDir string
 
-	// BlobClient is the azure blob storage client.
-	BlobClient *azblob.Client
 	// VoiceSampleContainer is the blob container name of the voice samples.
 	VoiceSampleContainer string
 	// VoiceSampleContainer is the blob container name of the voice models.
@@ -48,12 +48,13 @@ type Config struct {
 	// VoiceSampleContainer is the blob container name of the voice output files.
 	VoiceOutputContainer string
 
+	// BlobConnectionString is the azure sas connection string of blob storage.
+	BlobConnectionString string
+	// ServiceBusConnectionString  the azure sas connection string of service bus.
+	ServiceBusConnection string
+
 	// ServiceBusQueue is the name of azure service bus queue.
 	ServiceBusQueue string
-	// ServiceBusClient is the azure service bus client.
-	ServiceBusClient *azservicebus.Client
-	// ServiceBusClient is the azure service bus sender client.
-	ServiceBusSender *azservicebus.Sender
 }
 
 // HttpService implements HTTP handlers for serving static content, relaying to voice service, and more.
@@ -64,6 +65,17 @@ type HttpService struct {
 	VoiceClient *http.Client
 	// OpenAIClient is a ChatGPT client.
 	OpenAIClient *openai.Client
+
+	// LowLevelDB is an initialised low-level sql.DB database client.
+	LowLevelDB *sql.DB
+	// Database is the high level & strongly typed reconn DB client.
+	Database *dbgen.Queries
+	// BlobClient is the azure blob storage client.
+	BlobClient *azblob.Client
+	// ServiceBusClient is the azure service bus client.
+	ServiceBusClient *azservicebus.Client
+	// ServiceBusClient is the azure service bus sender client.
+	ServiceBusSender *azservicebus.Sender
 }
 
 // New returns an initialised HTTP service.
@@ -72,7 +84,38 @@ func New(conf *Config) (*HttpService, error) {
 		Config:       conf,
 		OpenAIClient: openai.NewClient(conf.OpenAIKey),
 		// The real-time voice service endpoint relays (mainly for development & testing) require a generous amount of timeout.
-		VoiceClient: &http.Client{Timeout: 3 * time.Minute},
+		VoiceClient: &http.Client{Timeout: 5 * time.Minute},
+	}
+	// Connect to DB.
+	var err error
+	svc.LowLevelDB, svc.Database, err = db.Connect(conf.Database)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+		return nil, err
+	}
+	log.Printf("successfully connected to database %v:%v, stats: %+v", conf.Database.Host, conf.Database.Port, svc.LowLevelDB.Stats())
+	// Connect to Azure blob storage.
+	svc.BlobClient, err = azblob.NewClientFromConnectionString(conf.BlobConnectionString, nil)
+	if err != nil {
+		log.Fatalf("failed to connect to azure blob storage: %v", err)
+		return nil, err
+	}
+	blobProps, err := svc.BlobClient.ServiceClient().GetProperties(context.Background(), nil)
+	if err != nil {
+		log.Fatalf("failed to connect to azure blob storage: %v", err)
+		return nil, err
+	}
+	log.Printf("successfully connected to azure storage (err? %v), %+#v", err, blobProps)
+	// Connect to azure service bus.
+	svc.ServiceBusClient, err = azservicebus.NewClientFromConnectionString(conf.ServiceBusConnection, nil)
+	if err != nil {
+		log.Fatalf("failed to connect to azure service bus: %v", err)
+		return nil, err
+	}
+	svc.ServiceBusSender, err = svc.ServiceBusClient.NewSender(conf.ServiceBusQueue, nil)
+	if err != nil {
+		log.Fatalf("failed to connect to azure service bus: %v", err)
+		return nil, err
 	}
 	return svc, nil
 }
