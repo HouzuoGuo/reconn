@@ -200,6 +200,9 @@ export class ChatService {
   createVoiceModel(voiceSampleID: number): Observable<VoiceModel> {
     return this.http.post<VoiceModel>("/api/debug/voice_sample/" + voiceSampleID + "/create_model", {}, { headers: { 'content-type': 'application/json' } });
   }
+  createVoiceModelAsync(voiceSampleID: number): Observable<VoiceModel> {
+    return this.http.post<VoiceModel>("/api/debug/voice_sample/" + voiceSampleID + "/create_model_async", {}, { headers: { 'content-type': 'application/json' } });
+  }
   getLatestVoiceModel(aiPersonID: number): Observable<GetLatestVoiceModelRow> {
     return this.http.get<GetLatestVoiceModelRow>("/api/debug/ai_person/" + aiPersonID + "/latest_model");
   }
@@ -207,8 +210,14 @@ export class ChatService {
   postTextMessage(aiPersonID: number, message: string): Observable<AiPersonReplyVoice> {
     return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_text_message", { message }, { headers: { 'content-type': 'application/json' } });
   }
+  postTextMessageAsync(aiPersonID: number, message: string): Observable<AiPersonReplyVoice> {
+    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_text_message_async", { message }, { headers: { 'content-type': 'application/json' } });
+  }
   postVoiceMessage(aiPersonID: number, blob: Blob): Observable<AiPersonReplyVoice> {
     return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_voice_message", blob, { headers: { 'content-type': 'audio/wav' } });
+  }
+  postVoiceMessageAsync(aiPersonID: number, blob: Blob): Observable<AiPersonReplyVoice> {
+    return this.http.post<AiPersonReplyVoice>("/api/debug/ai_person/" + aiPersonID + "/post_voice_message_async", blob, { headers: { 'content-type': 'audio/wav' } });
   }
   listConversation(aiPersonID: number, limit: number): Observable<ListConversationsRow[]> {
     return this.http.get<ListConversationsRow[]>("/api/debug/ai_person/" + aiPersonID + "/conversation?limit=" + limit);

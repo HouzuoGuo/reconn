@@ -68,12 +68,34 @@ export class ConversationManagementComponent implements OnInit {
     });
   }
 
+  sendTextAsyncClick() {
+    this.chatService.postTextMessageAsync(Number(this.aiPersonID), this.textMessage).pipe(
+      map((resp) => resp),
+      catchError((err) => of(err))
+    ).subscribe((result: unknown) => {
+      alert(JSON.stringify(result));
+    });
+  }
+
   sendVoiceNoteClick() {
     if (!this.recording || !this.aiPersonID) {
       return;
     }
     console.log('input recording', this.recording);
     this.chatService.postVoiceMessage(Number(this.aiPersonID), this.recording).pipe(
+      map((resp) => resp),
+      catchError((err) => of(err))
+    ).subscribe((result: unknown) => {
+      alert(JSON.stringify(result));
+    });
+  }
+
+  sendVoiceNoteAsyncClick() {
+    if (!this.recording || !this.aiPersonID) {
+      return;
+    }
+    console.log('input recording', this.recording);
+    this.chatService.postVoiceMessageAsync(Number(this.aiPersonID), this.recording).pipe(
       map((resp) => resp),
       catchError((err) => of(err))
     ).subscribe((result: unknown) => {

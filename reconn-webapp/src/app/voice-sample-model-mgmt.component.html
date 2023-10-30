@@ -20,7 +20,8 @@
 <p>
   Voice sample ID: <input type="text" [(ngModel)]="createModelVoiceSampleID" />
 </p>
-<button (click)="createModelClick()">Create model</button>
+<button (click)="createModelClick()">Create model in real time</button>
+<button (click)="createModelAsyncClick()">Create model using a GPU worker</button>
 
 <h4>
   Get the info about the latest voice model

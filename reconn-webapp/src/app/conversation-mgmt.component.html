@@ -2,7 +2,8 @@
 
 <h4>Post a text message</h4>
 <p>Message: <input type="text" [(ngModel)]="textMessage" /></p>
-<button (click)="sendTextClick()">Send</button>
+<button (click)="sendTextClick()">Send in real time</button>
+<button (click)="sendTextAsyncClick()">Send and use a GPU worker</button>
 
 <h4>Post a voice message</h4>
 <p>
@@ -11,6 +12,7 @@
 </p>
 <p *ngIf="recordingStatus | async as status">{{ status }}</p>
 <button (click)="sendVoiceNoteClick()">Send</button>
+<button (click)="sendVoiceNoteAsyncClick()">Send and use a GPU worker</button>
 
 <h4>Conversation history</h4>
 <ng-container *ngIf="listResp | async as resp">

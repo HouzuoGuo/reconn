@@ -235,12 +235,46 @@ func (q *Queries) GetAIPerson(ctx context.Context, id int64) (AiPerson, error) {
 	return i, err
 }
 
+const getAIPersonReplyByID = `-- name: GetAIPersonReplyByID :one
+select id, user_prompt_id, status, message, timestamp from ai_person_replies where id = $1
+`
+
+func (q *Queries) GetAIPersonReplyByID(ctx context.Context, id int64) (AiPersonReply, error) {
+	row := q.db.QueryRowContext(ctx, getAIPersonReplyByID, id)
+	var i AiPersonReply
+	err := row.Scan(
+		&i.ID,
+		&i.UserPromptID,
+		&i.Status,
+		&i.Message,
+		&i.Timestamp,
+	)
+	return i, err
+}
+
+const getAIPersonReplyVoiceByID = `-- name: GetAIPersonReplyVoiceByID :one
+select id, ai_person_reply_id, status, file_name from ai_person_reply_voices where id = $1
+`
+
+func (q *Queries) GetAIPersonReplyVoiceByID(ctx context.Context, id int64) (AiPersonReplyVoice, error) {
+	row := q.db.QueryRowContext(ctx, getAIPersonReplyVoiceByID, id)
+	var i AiPersonReplyVoice
+	err := row.Scan(
+		&i.ID,
+		&i.AiPersonReplyID,
+		&i.Status,
+		&i.FileName,
+	)
+	return i, err
+}
+
 const getLatestVoiceModel = `-- name: GetLatestVoiceModel :one
 select m.id as id, m.status as status, m.file_name as file_name, m.timestamp as timestamp,
 a.user_id as user_id, a.name as ai_name, a.context_prompt as ai_context_prompt
 from voice_models m
 join voice_samples s on m.voice_sample_id = s.id
 join ai_persons a on s.ai_person_id = a.id and a.id = $1
+where m.status = 'ready'
 order by m.timestamp desc
 limit 1
 `
@@ -521,7 +555,7 @@ func (q *Queries) UpdateAIPersonContextPromptByID(ctx context.Context, arg Updat
 }
 
 const updateAIPersonReplyByID = `-- name: UpdateAIPersonReplyByID :exec
-update ai_person_replies set status = $1 and message = $2 where id = $3
+update ai_person_replies set status = $1, message = $2 where id = $3
 `
 
 type UpdateAIPersonReplyByIDParams struct {
@@ -536,7 +570,7 @@ func (q *Queries) UpdateAIPersonReplyByID(ctx context.Context, arg UpdateAIPerso
 }
 
 const updateAIPersonReplyVoiceStatusByID = `-- name: UpdateAIPersonReplyVoiceStatusByID :exec
-update ai_person_reply_voices set status = $1 and file_name = $2 where id = $3
+update ai_person_reply_voices set status = $1, file_name = $2 where id = $3
 `
 
 type UpdateAIPersonReplyVoiceStatusByIDParams struct {
@@ -565,7 +599,7 @@ func (q *Queries) UpdateUserVoicePromptStatusByID(ctx context.Context, arg Updat
 }
 
 const updateVoiceModelByID = `-- name: UpdateVoiceModelByID :exec
-update voice_models set status = $1 and file_name = $2 where id = $3
+update voice_models set status = $1, file_name = $2 where id = $3
 `
 
 type UpdateVoiceModelByIDParams struct {

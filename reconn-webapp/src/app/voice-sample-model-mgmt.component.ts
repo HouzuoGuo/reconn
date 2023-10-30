@@ -81,6 +81,15 @@ export class VoiceSampleModelManagementComponent implements OnInit {
     });
   }
 
+  createModelAsyncClick() {
+    this.chatService.createVoiceModelAsync(Number(this.createModelVoiceSampleID)).pipe(
+      map((resp) => resp),
+      catchError((err) => of(err))
+    ).subscribe((result: unknown) => {
+      alert(JSON.stringify(result));
+    });
+  }
+
   getLatestModelClick() {
     this.chatService.getLatestVoiceModel(Number(this.getLatestModelAIPersonID)).pipe(
       map((resp) => resp),

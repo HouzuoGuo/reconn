@@ -11,7 +11,12 @@ import (
 
 // GPUTask describes the paramters of a GPU task intended for the GPU-enabled workers.
 type GPUTask struct {
-	VoiceModelID   int
+	// VoiceModelID is the voice model ID record in database for the GPU worker to create a voice model.
+	VoiceModelID int
+
+	// AIReplyPersonID is the AI person ID in database for the GPU worker to perform TTS.
+	AIReplyPersonID int
+	// AIReplyPersonID is the AI person reply ID in database for the GPU worker to perform TTS.
 	AIReplyVoiceID int
 }
 
@@ -46,4 +51,36 @@ func DownloadBlobToLocalFileIfNotExist(ctx context.Context, blobClient *azblob.C
 	defer localFile.Close()
 	_, err = blobClient.DownloadFile(ctx, blobContainerName, fileName, localFile, nil)
 	return localFilePath, err
+}
+
+func UploadFromLocalFile(ctx context.Context, blobClient *azblob.Client, blobContainerName, fileName, localDir string) error {
+	if localDirStat, err := os.Stat(localDir); err != nil || !localDirStat.IsDir() {
+		err = fmt.Errorf("cannot access local fs directory %q: %w", localDir, err)
+		return err
+	}
+	localFile, err := os.Open(path.Join(localDir, fileName))
+	if err != nil {
+		return err
+	}
+	defer localFile.Close()
+	_, err = blobClient.UploadFile(ctx, blobContainerName, fileName, localFile, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UploadAndSave(ctx context.Context, blobClient *azblob.Client, blobContainerName, fileName, localDir string, data []byte) (string, error) {
+	if localDirStat, err := os.Stat(localDir); err != nil || !localDirStat.IsDir() {
+		err = fmt.Errorf("cannot access local fs directory %q: %w", localDir, err)
+		return "", err
+	}
+	localFilePath := path.Join(localDir, fileName)
+	if err := os.WriteFile(localFilePath, data, 0644); err != nil {
+		return "", err
+	}
+	if _, err := blobClient.UploadBuffer(ctx, blobContainerName, fileName, data, nil); err != nil {
+		return "", err
+	}
+	return localFilePath, nil
 }

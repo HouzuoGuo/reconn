@@ -159,7 +159,8 @@ func (svc *HttpService) handlePostTextMessageAsync(c *gin.Context) {
 	}
 	// Post to the GPU task queue.
 	taskBody, err := json.Marshal(shared.GPUTask{
-		AIReplyVoiceID: int(aiReplyVoice.ID),
+		AIReplyVoiceID:  int(aiReplyVoice.ID),
+		AIReplyPersonID: aiPersonID,
 	})
 	if err != nil {
 		log.Printf("marshal gputask error: %v", err)
@@ -266,6 +267,7 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		Timestamp:    timestamp,
 	})
 	if err != nil {
+		log.Printf("create ai person reply error: %v", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -276,9 +278,15 @@ func (svc *HttpService) handlePostVoiceMessageAsync(c *gin.Context) {
 		Status:          "processing",
 		FileName:        sql.NullString{String: "waiting to be processed by GPU worker", Valid: true},
 	})
+	if err != nil {
+		log.Printf("create ai person reply voice error: %v", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
 	// Post to the GPU task queue.
 	taskBody, err := json.Marshal(shared.GPUTask{
-		AIReplyVoiceID: int(aiReplyVoice.ID),
+		AIReplyVoiceID:  int(aiReplyVoice.ID),
+		AIReplyPersonID: aiPersonID,
 	})
 	if err != nil {
 		log.Printf("marshal gputask error: %v", err)

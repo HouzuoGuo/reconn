@@ -33,10 +33,11 @@ a.user_id as user_id, a.name as ai_name, a.context_prompt as ai_context_prompt
 from voice_models m
 join voice_samples s on m.voice_sample_id = s.id
 join ai_persons a on s.ai_person_id = a.id and a.id = $1
+where m.status = 'ready'
 order by m.timestamp desc
 limit 1;
 -- name: UpdateVoiceModelByID :exec
-update voice_models set status = $1 and file_name = $2 where id = $3;
+update voice_models set status = $1, file_name = $2 where id = $3;
 
 -- name: CreateUserPrompt :one
 insert into user_prompts (ai_person_id, timestamp) values ($1, $2) returning *;
@@ -51,13 +52,17 @@ update user_voice_prompts set status = $1 where id = $2;
 
 -- name: CreateAIPersonReply :one
 insert into ai_person_replies (user_prompt_id, status, message, timestamp) values ($1, $2, $3, $4) returning *;
+-- name: GetAIPersonReplyByID :one
+select * from ai_person_replies where id = $1;
 -- name: UpdateAIPersonReplyByID :exec
-update ai_person_replies set status = $1 and message = $2 where id = $3;
+update ai_person_replies set status = $1, message = $2 where id = $3;
 
 -- name: CreateAIPersonReplyVoice :one
 insert into ai_person_reply_voices (ai_person_reply_id, status, file_name) values ($1, $2, $3) returning *;
+-- name: GetAIPersonReplyVoiceByID :one
+select * from ai_person_reply_voices where id = $1;
 -- name: UpdateAIPersonReplyVoiceStatusByID :exec
-update ai_person_reply_voices set status = $1 and file_name = $2 where id = $3;
+update ai_person_reply_voices set status = $1, file_name = $2 where id = $3;
 
 -- name: ListConversations :many
 select u.id as id, u.ai_person_id as ai_person_id, u.timestamp as timestamp,
