@@ -231,7 +231,7 @@ func (worker *GPUWorker) convertReplyToSpeech(ctx context.Context, task shared.G
 		TopK:         99,
 		TopP:         0.8,
 		MineosP:      0.01,
-		SemanticTemp: 0.7,
+		SemanticTemp: 0.8,
 		WaveformTemp: 0.6,
 		FineTemp:     0.5,
 	})
