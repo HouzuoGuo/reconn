@@ -15,8 +15,11 @@ import (
 
 func main() {
 	var httpDebugMode, gpuWorkerMode bool
+
 	var port int
 	var addr string
+	var tlsCert, tlsKey string
+
 	var basicAuthUser, basicAuthPassword string
 	var voiceServiceAddr, openaiKey string
 	var dbConf db.Config
@@ -28,10 +31,13 @@ func main() {
 	flag.BoolVar(&httpDebugMode, "debug", false, "start http server in debug mode")
 	flag.BoolVar(&gpuWorkerMode, "gpuworker", false, "start as GPU worker instead of an http server")
 
-	flag.IntVar(&port, "port", 8080, "http server listener port")
+	flag.IntVar(&port, "port", 8080, "web server listener port")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "http server listener address")
 	flag.StringVar(&basicAuthUser, "authuser", "reconn", "http basic auth user name")
 	flag.StringVar(&basicAuthPassword, "authpass", "reconnreconn", "http basic auth user name")
+
+	flag.StringVar(&tlsCert, "tlscert", "", "tls certificate file path")
+	flag.StringVar(&tlsKey, "tlskey", "", "tls certificate key path")
 
 	flag.StringVar(&voiceServiceAddr, "voicesvcaddr", "localhost:8081", "voice service address (host:port)")
 	flag.StringVar(&openaiKey, "openaikey", "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", "openai API secret key")
@@ -101,11 +107,11 @@ func main() {
 			ServiceBusQueue:      azServiceBusQueue,
 			ServiceBusConnection: azServiceBusConnString,
 		}
-		startHTTPServer(httpConf, addr, port)
+		startHTTPServer(httpConf, addr, port, tlsCert, tlsKey)
 	}
 }
 
-func startHTTPServer(conf *httpsvc.Config, addr string, port int) {
+func startHTTPServer(conf *httpsvc.Config, addr string, port int, tlsCert, tlsKey string) {
 	httpService, err := httpsvc.New(conf)
 	if err != nil {
 		log.Fatalf("failed to initialise http service: %v", err)
@@ -119,8 +125,10 @@ func startHTTPServer(conf *httpsvc.Config, addr string, port int) {
 		Handler:           httpService.SetupRouter(),
 		Addr:              net.JoinHostPort(addr, strconv.Itoa(port)),
 	}
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(err)
+	if tlsCert == "" {
+		log.Fatal(server.ListenAndServe())
+	} else {
+		log.Fatal(server.ListenAndServeTLS(tlsCert, tlsKey))
 	}
 }
 
