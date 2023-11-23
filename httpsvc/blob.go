@@ -3,7 +3,7 @@ package httpsvc
 import (
 	"context"
 
-	"github.com/re-connect-ai/reconn/shared"
+	"github.com/HouzuoGuo/reconn-voice-clone/shared"
 )
 
 func (svc *HttpService) DownloadBlobToLocalFileIfNotExist(ctx context.Context, blobContainerName, fileName, localDir string) (string, error) {

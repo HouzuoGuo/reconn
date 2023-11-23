@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/re-connect-ai/reconn/db/dbgen"
-	"github.com/re-connect-ai/reconn/shared"
+	"github.com/HouzuoGuo/reconn-voice-clone/db/dbgen"
+	"github.com/HouzuoGuo/reconn-voice-clone/shared"
 )
 
 // handleCreateAIPerson a gin handler that creates a voice sample record from waveforms of the request.

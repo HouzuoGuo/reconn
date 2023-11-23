@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/re-connect-ai/reconn/shared"
+	"github.com/HouzuoGuo/reconn-voice-clone/shared"
 	openai "github.com/sashabaranov/go-openai"
 )
 

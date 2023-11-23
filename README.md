@@ -1,14 +1,44 @@
-# reconn
+# reconn - Self-hosted voice clone and inference service
 
-Be it POC, server-side, client-side - everything can belong here for now.
+reconn is a voice clone service based on
+[Bark TTS](https://github.com/serp-ai/bark-with-voice-clone) that leverages
+generative AI.
 
-## Database server
+In addition, it uses a PostgreSQL database to model chat-bot like interaction
+with cloned voice models, and distributes the intensive CUDA workload across
+GPUs using an Azure service bus.
 
-Connect to the database using: `psql -h reconn-user-db.postgres.database.azure.com -U reconnadmin -d postgres`, the database password is `BOInscINOnioVc2RK`.
+The program is only a short, incomplete programming exercise, notably missing
+the integration with a chat bot service such as Microsoft bot framework and
+Twilio.
+
+## Components overview
+
+-   A web server for the main app (aka "debug web app") running on CPU.
+    *   Start `main.go` with `-debug=true -gpuworker=false`
+    *   Start `ng serve` for interactive angular development, or `make all` to
+        package both the angular app and go web server into a container image.
+    *   The debug web app is a single page app and should be fairly self
+        explanatory.
+-   A voice clone and model inference server (aka "voicesvc") running on GPU.
+    *   This requires a CUDA capable GPU and has only been tested on Windows.
+    *   See `voicesvc/README.md` and `voicesvc/Pipfile` for dependency
+        installation instructions.
+-   A GPU worker server that picks up GPU tasks and forwards them to "voicesvc".
+    *   This is a companion to "voicesvc" and typically started on the same
+        GPU-equipped host, though the worker logic runs on CPU.
+    *   Start `main.go` with `-debug=true -gpuworker=true`.
+
+## Development tips
+
+### Database server
+
+Connect to the database using: `psql -h xx.postgres.database.azure.com -U
+useruser -d postgres`.
 
 List and create database:
 
-``` shell
+```shell
 
 postgres=> create database reconn;
 CREATE DATABASE
@@ -22,6 +52,8 @@ postgres=> \l
  reconn            | reconnadmin    | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
 ...
 ```
+
+Use `\i` to load schema file and execute the DDL.
 
 ## Web server
 
@@ -60,61 +92,37 @@ npm install # install angular dependencies
 ng serve
 ```
 
-Angular's auto-reloading web server will automatically proxy backend requests `/api/*` to `localhost:8080`.
+Angular's auto-reloading web server will automatically proxy backend requests
+`/api/*` to `localhost:8080`.
 
 To run tests: `ng test --browsers ChromeHeadless`
 
 ### Build container image
 
-The Makefile builds the backend (incl. web server) binary and frontend web app assets, then copies both into a container image:
+The Makefile builds the backend (incl. web server) binary and frontend web app
+assets, then copies both into a container image:
 
 ```shell
 # CWD: reconn repository root
 make
 ```
 
-Note that the web app assets uses `ng build --base-href /resource/` to match the expectation of the backend web server.
+Note that the web app assets uses `ng build --base-href /resource/` to match the
+expectation of the backend web server.
 
-## Voice server
+### Voice server
 
-### Start the voice server
+#### Start the voice server
 
-Install pipenv (`pip install pipenv`), then enter pipenv shell, and follow the instructions in `reconn/voicesvc/Pipfile` to install the dependencies.
-
-Start the development web server using `./main.py --debug --ai_computing_device=cpu` (too slow for AI inference):
-
-```shell
-⋊> /m/c/U/g/D/r/voicesvc on main ⨯ pipenv shell
-Launching subshell in virtual environment...
- source /home/howard/.local/share/virtualenvs/voicesvc-gxZigfdY/bin/activate.fish
-⋊> /m/c/U/g/D/r/voicesvc on main ⨯  source /home/howard/.local/share/virtualenvs/voicesvc-gxZigfdY/bin/activate.fish
-
-(voicesvc) ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ ./main.py --debug --ai_computing_device=cpu
-2023-09-30 18:06:18 | INFO | root | about to start voice web service on 127.0.0.1:8081
-2023-09-30 18:06:18 | INFO | root | using cpu for AI computing
-2023-09-30 18:06:18 | INFO | root | using /tmp/voice_static_resource_dir for static resources
-2023-09-30 18:06:18 | INFO | root | using /tmp/voice_sample_dir for voice sample storage
-2023-09-30 18:06:18 | INFO | root | using /tmp/voice_model_dir for voice model storage
-2023-09-30 18:06:18 | INFO | root | using /tmp/voice_temp_model_dir for temporary voice model storage
-2023-09-30 18:06:18 | INFO | root | using /tmp/voice_output_dir for TTS output storage
-...
- * Serving Flask app 'app'
- * Debug mode: off
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on http://127.0.0.1:8081
-Press CTRL+C to quit
-...
-```
+Install pipenv (`pip install pipenv`), then enter pipenv shell, and follow the
+instructions in `reconn/voicesvc/Pipfile` to install the dependencies.
 
 To start on CUDA-capable Windows host:
 
-``` shell
+```shell
 PS C:\Users\guoho\Downloads\reconn\voicesvc> pipenv shell
 Launching subshell in virtual environment...
-Windows PowerShell
-Copyright (C) Microsoft Corporation. All rights reserved.
-
-Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+...
 
 PS C:\Users\guoho\Downloads\reconn\voicesvc> python main.py
 2023-09-30 18:18:33 | INFO | root | about to start voice web service on 127.0.0.1:8081
@@ -141,3 +149,10 @@ INFO     root:svc.py:91 initialising prerequisites
 INFO     root:svc.py:92 using cpu for AI computing
 ...
 ```
+
+## License
+
+Copyright (C) 2023 Houzuo Guo All rights reserved.
+
+This program is free software subject to the terms of GNU Public License, v 3.0.
+You may find the license text in the LICENSE file.

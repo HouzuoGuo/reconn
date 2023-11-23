@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/HouzuoGuo/reconn-voice-clone/db/dbgen"
 	_ "github.com/lib/pq"
-	"github.com/re-connect-ai/reconn/db/dbgen"
 )
 
 // Config describes database connection parameters.

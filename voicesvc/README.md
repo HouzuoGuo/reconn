@@ -1,6 +1,8 @@
 # Voice processing service in python
 
-Please clone `git@github.com:re-connect-ai/bark-with-voice-clone.git` to this directory and name it `bark_voice_clone`, the result directory tree should look like:
+Please clone `git@github.com:HouzuoGuo/bark-with-voice-clone.git` to this
+directory and name it `bark_voice_clone`, the result directory tree should look
+like:
 
 ```
 ⋊> /m/c/U/g/D/r/voicesvc on main ⨯ tree
@@ -17,4 +19,3 @@ Please clone `git@github.com:re-connect-ai/bark-with-voice-clone.git` to this di
 │   └── ...
 └── main.py
 ```
-

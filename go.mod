@@ -1,4 +1,4 @@
-module github.com/re-connect-ai/reconn
+module github.com/HouzuoGuo/reconn-voice-clone
 
 go 1.21.1
 

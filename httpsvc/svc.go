@@ -11,8 +11,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
-	"github.com/re-connect-ai/reconn/db"
-	"github.com/re-connect-ai/reconn/db/dbgen"
+	"github.com/HouzuoGuo/reconn-voice-clone/db"
+	"github.com/HouzuoGuo/reconn-voice-clone/db/dbgen"
 	openai "github.com/sashabaranov/go-openai"
 )
 

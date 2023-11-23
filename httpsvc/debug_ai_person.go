@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/re-connect-ai/reconn/db/dbgen"
+	"github.com/HouzuoGuo/reconn-voice-clone/db/dbgen"
 )
 
 // handleCreateAIPerson a gin handler that creates a AI personality with its voice model and context prompt.
